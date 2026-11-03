@@ -21,6 +21,7 @@ from typing import Iterator
 from .versions import (
     FileVersion,
     ParsedName,
+    convention_issues,
     group_documents,
     has_rev_conflict,
     natural_key,
@@ -42,6 +43,8 @@ ISSUE_KINDS = {
     "guion_bajo_inicial": "Nombre que empieza con guion bajo",
     "carpeta_vacia": "Carpeta sin documentos publicables",
     "enlace_ignorado": "Enlace simbólico (no se publica)",
+    "sin_revision": "Documento con código y sin revisión en el nombre",
+    "revision_no_estandar": "Revisión escrita distinto de _Rev.NN",
 }
 
 
@@ -164,9 +167,20 @@ class Index:
     _fs_source: str = field(repr=False, default="")
     _sections: dict[str, Section] = field(repr=False, default_factory=dict)
     _documents: dict[str, Document] = field(repr=False, default_factory=dict)
+    _by_relpath: dict[str, Section] = field(repr=False, default_factory=dict)
 
     def section(self, path: str) -> Section | None:
         return self._sections.get(path.strip("/"))
+
+    def section_of(self, relpath: str) -> Section | None:
+        """Sección publicada más cercana que contiene una ruta del disco (archivo o carpeta)."""
+        partes = relpath.strip("/").split("/")
+        while partes:
+            partes.pop()
+            section = self._by_relpath.get("/".join(partes))
+            if section is not None:
+                return section
+        return None
 
     def document(self, path: str) -> Document | None:
         return self._documents.get(path.strip("/"))
@@ -255,6 +269,7 @@ class _Builder:
                     self.issues.append(Issue("conflicto_revision", vs[0].relpath, f"Revisión mayor: {top_rev.name}"))
         for f in files:
             self.issues.extend(Issue(note, f.relpath) for note in f.parsed.notes)
+            self.issues.extend(Issue(kind, f.relpath, detail) for kind, detail in convention_issues(f.parsed))
         return docs
 
 
@@ -269,6 +284,7 @@ def _sort_key(info: ParsedName) -> tuple:
 def _finalize(section: Section, index: Index) -> None:
     """Ordena, asigna slugs y rutas, y registra secciones y documentos en el índice."""
     index._sections[section.path] = section
+    index._by_relpath[section.relpath] = section
 
     section.sections.sort(key=lambda s: _sort_key(s.info))
     # Carpetas por año ("2018", "2019"…): primero la más reciente

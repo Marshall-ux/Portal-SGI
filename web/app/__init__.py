@@ -22,6 +22,8 @@ def create_app(config: dict | None = None) -> Flask:
         DATA_DIR=os.environ.get("PORTAL_DATOS", "/data"),
         EXCLUSIONES=os.environ.get("PORTAL_EXCLUSIONES", DEFAULT_EXCLUDES),
         AVISO=os.environ.get("PORTAL_AVISO") or AVISO_POR_DEFECTO,
+        # Cómo ve SGI la raíz del disco en Windows: se usa para mostrar rutas en el reporte
+        RUTA_DISCO=os.environ.get("PORTAL_RUTA_DISCO", "I:\\"),
         CONFIG_FILE=os.environ.get(
             "PORTAL_CONFIG", os.path.join(os.path.dirname(app.root_path), "config", "portal.toml")
         ),

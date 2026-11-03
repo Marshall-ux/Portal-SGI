@@ -1,9 +1,12 @@
 """Rutas del portal: home, secciones, buscador, documentos y estado."""
 from __future__ import annotations
 
-from flask import (Blueprint, abort, current_app, jsonify, redirect, render_template, request,
+from datetime import date
+
+from flask import (Blueprint, Response, abort, current_app, jsonify, redirect, render_template, request,
                    send_file, url_for)
 
+from . import reporte as rep
 from .indexer import Document, Index, Section
 from .search import buscar as buscar_en
 from .store import IndexStore
@@ -92,6 +95,31 @@ def documento(ruta: str):
         conditional=True,
         max_age=0,  # siempre se revalida: después de una sincronización llega la versión nueva
     )
+
+
+@bp.get("/reporte")
+def reporte():
+    """Qué revisar en el disco para que el portal quede ordenado (para el equipo de SGI)."""
+    index = _index_o_preparando()
+    grupos = rep.agrupar(index)
+    return render_template(
+        "reporte.html",
+        index=index,
+        estado=_store().status(),
+        grupos=grupos,
+        a_corregir=rep.a_corregir(grupos),
+        ruta_disco=lambda relpath: rep.ruta_disco(relpath, current_app.config["RUTA_DISCO"]),
+    )
+
+
+@bp.get("/reporte.csv")
+def reporte_csv():
+    grupos = rep.agrupar(_index_o_preparando())
+    # Con BOM: Excel lo abre con los acentos bien
+    contenido = "﻿" + rep.a_csv(grupos, current_app.config["RUTA_DISCO"])
+    nombre = f"reporte-disco-sgi-{date.today():%Y-%m-%d}.csv"
+    return Response(contenido, mimetype="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
 
 
 @bp.get("/salud")

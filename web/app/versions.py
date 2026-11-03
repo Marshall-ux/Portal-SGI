@@ -165,6 +165,23 @@ def parse_name(name: str, is_dir: bool = False) -> ParsedName:
     )
 
 
+_REV_ESTANDAR = re.compile(r"_Rev\.\d{2}")
+
+
+def convention_issues(parsed: ParsedName) -> list[tuple[str, str]]:
+    """Diferencias con la convención "CÓDIGO - Nombre_Rev.NN": lista de (tipo, detalle).
+
+    Solo se exige revisión a los documentos con código; los demás (capacitaciones,
+    informes) pueden no tenerla. El portal funciona igual: es una guía para SGI.
+    """
+    issues = []
+    if parsed.code and parsed.rev is None:
+        issues.append(("sin_revision", ""))
+    if parsed.rev_token and not _REV_ESTANDAR.fullmatch(parsed.rev_token):
+        issues.append(("revision_no_estandar", parsed.rev_token))
+    return issues
+
+
 @dataclass(frozen=True)
 class FileVersion:
     """Un archivo concreto del disco: una versión (en un formato) de un documento."""

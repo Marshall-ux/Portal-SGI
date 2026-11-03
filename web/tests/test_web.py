@@ -155,6 +155,39 @@ def test_busqueda_en_el_header_de_todas_las_paginas(client):
         assert 'id="buscar-portal"' in html(client.get(ruta))
 
 
+# ── Reporte del disco ───────────────────────────────────────────────────────
+
+
+def test_reporte(client):
+    r = client.get("/reporte")
+    page = html(r)
+    assert r.status_code == 200
+    assert "Reporte del disco SGI" in page
+    assert "Al día" in page  # sync.json sin error
+    # "F 8.4-01 - Autorización Generica_Rev.07" está en PDF y XLS: no hay avisos de nombre
+    assert "Todo en orden" in page
+    assert 'href="/reporte"' in html(client.get("/"))  # enlace en el pie
+
+
+def test_reporte_muestra_avisos_y_falla_de_sincronizacion(data_dir, make_tree):
+    (data_dir / "current" / "F 7.2-15 Acta de Dirección.xlsx").write_bytes(b"x")
+    (data_dir / "sync.json").write_text(json.dumps({**SYNC, "ultimo_estado": "error",
+                                                    "ultimo_error": "El origen /mnt/disco está vacío."}), encoding="utf-8")
+    page = html(create_app({"DATA_DIR": str(data_dir), "RUTA_DISCO": "I:\\"}).test_client().get("/reporte"))
+    assert "Documentos con código y sin revisión" in page
+    assert "I:\\F 7.2-15 Acta de Dirección.xlsx" in page
+    assert "Falló el último intento" in page and "El origen /mnt/disco está vacío." in page
+
+
+def test_reporte_csv(client):
+    r = client.get("/reporte.csv")
+    assert r.status_code == 200
+    assert r.mimetype == "text/csv"
+    assert r.headers["Content-Disposition"].startswith('attachment; filename="reporte-disco-sgi-')
+    texto = r.get_data(as_text=True)
+    assert texto.startswith("\ufeffTipo;Qué hacer;Ruta en el disco;Detalle")
+
+
 # ── Documentos ──────────────────────────────────────────────────────────────
 
 

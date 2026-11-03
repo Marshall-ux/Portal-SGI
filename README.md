@@ -78,6 +78,25 @@ repetida (`.pdf.pdf`), versiones viejas en la misma carpeta y carpetas vacías.
   "Capacitación") y primero aparecen los documentos cuyo nombre contiene la consulta tal cual.
 - **Links viejos**: si un documento cambia de carpeta y su nombre es único, su link anterior redirige al nuevo.
 
+## Reporte del disco (para SGI)
+
+`/reporte` (enlace en el pie de todas las páginas) muestra qué revisar en el disco I para que el portal
+quede ordenado, agrupado por prioridad y con "qué hacer" en cada caso:
+
+| Aviso | Qué hacer |
+|---|---|
+| La versión más nueva no es la de mayor revisión | Revisar cuál es la vigente (alguien guardó una revisión vieja) |
+| Versiones anteriores en la misma carpeta | Retirar la anterior |
+| Documentos con código y sin revisión | Agregar `_Rev.NN` al nombre |
+| Extensión repetida, guion bajo inicial | Renombrar |
+| Carpetas vacías, enlaces | Completar o eliminar |
+| Revisión escrita distinto de `_Rev.NN` (plegado) | Usar el formato estándar en la próxima revisión |
+| Archivos técnicos o temporales (plegado) | Nada: el portal los oculta |
+
+Cada aviso muestra la ruta como la ve SGI en Windows (`I:\…`, configurable con `PORTAL_RUTA_DISCO`) y
+un enlace a la carpeta en el portal. Incluye el estado de la última sincronización y se puede descargar
+para Excel (`/reporte.csv`). Se actualiza solo con cada sincronización.
+
 ### Renovación de la certificación
 
 El sello se genera desde el PDF vectorial que entrega el certificador, sin modificar la marca
@@ -121,6 +140,7 @@ portal-sgi/
 │   │   ├── routes.py       # Home, secciones (/s/…), buscador, documentos (/d/…) y estado (/salud)
 │   │   ├── search.py       # Buscador sin acentos ni mayúsculas
 │   │   ├── vistas.py       # Presentación: títulos legibles, íconos por formato
+│   │   ├── reporte.py      # Reporte del disco para SGI (avisos por prioridad, CSV)
 │   │   ├── templates/      # Plantillas Jinja2
 │   │   └── static/         # CSS con la paleta SGI como variables, imágenes, sello
 │   └── tests/

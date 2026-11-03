@@ -299,6 +299,72 @@ a { color: var(--sgi-primario); }
 }
 .boton:hover { background: var(--sgi-primario-oscuro); }
 
+/* ── Reporte del disco ── */
+.boton-secundario {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 0; flex-shrink: 0;
+  background: var(--blanco); color: var(--sgi-primario); border: 1.5px solid var(--sgi-superficie-2);
+}
+.boton-secundario:hover { background: var(--sgi-tinte); }
+.boton .simbolo { width: 18px; height: 18px; }
+
+.estado-sync {
+  background: var(--blanco); border: 1.5px solid var(--borde); border-left: 5px solid var(--iso-14001);
+  border-radius: var(--radio); padding: 20px 24px; box-shadow: var(--sombra);
+}
+.estado-error { border-left-color: #B42020; }
+.estado-marca {
+  display: inline-block; padding: 3px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px; background: #EAF4E4; color: #3B7A18;
+}
+.estado-error .estado-marca { background: #F9E3E3; color: #B42020; }
+.estado-datos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 14px; }
+.estado-datos dt { font-size: 0.75rem; color: var(--texto-suave); }
+.estado-datos dd { font-weight: 600; color: var(--texto-fuerte); font-size: 0.9rem; overflow-wrap: anywhere; }
+.estado-error-texto { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; color: #B42020; font-size: 0.88rem; }
+.estado-error-texto .simbolo { flex-shrink: 0; margin-top: 1px; }
+
+.resumen { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.dato {
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--blanco); border: 1.5px solid var(--borde); border-radius: 14px; padding: 18px 20px;
+}
+.dato-valor { font-family: var(--fuente-titulos); font-size: 1.8rem; font-weight: 800; color: var(--sgi-primario); line-height: 1.1; }
+.dato-texto { font-size: 0.82rem; color: var(--texto-suave); }
+.dato-alerta .dato-valor { color: var(--iso-45001); }
+
+.grupos { display: flex; flex-direction: column; gap: 12px; }
+.grupo { background: var(--blanco); border: 1.5px solid var(--borde); border-radius: 14px; overflow: hidden; }
+.grupo summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px; cursor: pointer; list-style: none;
+}
+.grupo summary::-webkit-details-marker { display: none; }
+.grupo summary::before {
+  content: ""; width: 8px; height: 8px; flex-shrink: 0;
+  border-right: 2px solid var(--sgi-primario); border-bottom: 2px solid var(--sgi-primario);
+  transform: rotate(-45deg); transition: transform 0.2s ease;
+}
+.grupo[open] summary::before { transform: rotate(45deg); }
+.grupo-titulo { flex: 1; font-weight: 700; color: var(--texto-fuerte); }
+.grupo-cantidad {
+  min-width: 34px; padding: 2px 10px; border-radius: 50px; text-align: center;
+  background: var(--sgi-superficie); color: var(--sgi-primario); font-weight: 700; font-size: 0.82rem;
+}
+.grupo-que-hacer { padding: 0 20px 12px 40px; font-size: 0.88rem; color: var(--texto); }
+.avisos-lista { list-style: none; border-top: 1px solid var(--borde); }
+.avisos-lista li {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
+  padding: 10px 20px 10px 40px; border-bottom: 1px solid var(--borde); font-size: 0.82rem;
+}
+.avisos-lista li:last-child { border-bottom: 0; }
+.ruta-disco {
+  flex: 1 1 420px; min-width: 0; overflow-wrap: anywhere; color: var(--texto-fuerte);
+  font-family: Consolas, 'Cascadia Mono', monospace; font-size: 0.8rem;
+}
+.aviso-detalle { color: var(--texto-suave); overflow-wrap: anywhere; }
+.aviso-enlace { font-weight: 600; text-decoration: none; white-space: nowrap; }
+.aviso-enlace:hover { text-decoration: underline; }
+
 /* ── Pie ── */
 .pie { padding-top: 8px; padding-bottom: 36px; }
 .pie-linea { display: flex; align-items: center; }
@@ -328,6 +394,8 @@ a { color: var(--sgi-primario); }
   .cert-sello { max-width: 520px; }
   .encabezado-fila { flex-wrap: wrap; }
   .buscador-seccion { width: 100%; }
+  .resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .estado-datos { grid-template-columns: minmax(0, 1fr); gap: 10px; }
 }
 
 @media (max-width: 600px) {

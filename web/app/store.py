@@ -91,7 +91,8 @@ class IndexStore:
             if self._index is None or self._index.source != target:
                 try:
                     self._index = build_index(target, self.exclusions)
-                    log.info("Índice regenerado: %s (%d documentos)", target, len(self._index.documents))
+                    log.info("Índice regenerado: %s (%d documentos, %d avisos para el reporte)",
+                             target, len(self._index.documents), len(self._index.issues))
                 except Exception:
                     # Mejor seguir mostrando la copia anterior que dejar el portal sin datos
                     log.exception("No se pudo escanear %s; se mantiene el índice anterior", target)
