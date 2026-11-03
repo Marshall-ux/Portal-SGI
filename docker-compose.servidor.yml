@@ -1,0 +1,14 @@
+# Servidor de I+D: conecta sgi-web a la red del portal (como hace extractor-datos), así el
+# nginx de portal-interno lo alcanza por nombre. Se activa desde el .env del servidor:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.servidor.yml
+services:
+  sgi-web:
+    networks:
+      - default
+      - portal
+
+networks:
+  default:
+  portal:
+    external: true
+    name: ${PORTAL_RED:-portal-interno_portal-net}
