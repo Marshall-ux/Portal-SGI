@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_iconos.html" import simbolo %}
+{% block titulo %}Preparando el portal{% endblock %}
+{% block contenido %}
+<section class="contenedor mensaje">
+  <h1 class="titulo-seccion">Estamos preparando el portal</h1>
+  <p class="subtitulo">Se está copiando la documentación del SGI por primera vez. Volvé a intentar en unos minutos.</p>
+  {% if estado.fallo_el_ultimo_intento %}
+    <p class="aviso aviso-error">{{ simbolo("aviso", "aviso-icono") }}<span>La última sincronización falló: {{ estado.ultimo_error }}</span></p>
+  {% endif %}
+</section>
+{% endblock %}
