@@ -157,11 +157,11 @@ portal-sgi/
 
 ## Sincronización del disco
 
-El portal no lee el disco I en vivo. El servicio `sync` lo copia una vez por día (`SYNC_HORARIO`,
+El portal no lee el disco I en vivo. El servicio `sgi-sync` lo copia una vez por día (`SYNC_HORARIO`,
 por defecto a las 6:00) a un volumen local, y el portal lee esa copia.
 
 ```
-\\192.168.41.5\iso ──SMB, solo lectura──▶ sync ──▶ volumen sgi-data
+\\192.168.41.5\iso ──SMB, solo lectura──▶ sgi-sync ──▶ volumen sgi-data
                                                     ├── snapshots/<fecha>/   copias
                                                     ├── current → snapshots/<la publicada>
                                                     ├── sync.json            estado
@@ -203,7 +203,7 @@ igual que extractor-datos o proceso-compra: `sgi-web` se une a la red `portal-in
 ```
 nginx de portal-interno ──/sgi/──▶ sgi-web (Flask + gunicorn, :5001) ──lee──▶ volumen sgi-data
    (red portal-interno_portal-net)                                                ▲ escribe
-\192.168.41.5\iso ──SMB, solo lectura──▶ sgi-sync (rsync + cron) ────────────────┘
+\\192.168.41.5\iso ──SMB, solo lectura──▶ sgi-sync (rsync + cron) ────────────────┘
 ```
 
 Así, actualizar o reiniciar el portal SGI no toca a las demás apps, y del lado de portal-interno
@@ -218,7 +218,7 @@ solo se agrega un bloque en `nginx/nginx.conf`.
    git clone -b main https://github.com/Marshall-ux/Portal-SGI.git portal-sgi
    ```
 
-2. Configurar (credenciales de la cuenta de servicio de IT, solo lectura sobre `\192.168.41.5\iso`):
+2. Configurar (credenciales de la cuenta de servicio de IT, solo lectura sobre `\\192.168.41.5\iso`):
 
    ```bash
    cd portal-sgi
@@ -266,14 +266,17 @@ sudo docker compose up -d --build
 
 ## Desarrollo local
 
-Con una copia del disco en la PC (por defecto `C:/Temp/DocumentacionISO`, variable `SGI_DISCO_LOCAL`):
+Con una copia del disco en la PC (por defecto `C:/Temp/DocumentacionISO`, variable `SGI_DISCO_LOCAL`).
+En el `.env` se cambia `COMPOSE_FILE` por el par de desarrollo, así todos los comandos (`up`, `logs`,
+`exec`…) se escriben igual que en el servidor, sin `-f`:
 
 ```bash
 cp .env.example .env
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# en .env:  COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+docker compose up -d --build
 ```
 
-- Portal a través de un nginx que replica el de portal-interno: http://localhost:8096/sgi/
+- Portal a través de un nginx de prueba con el mismo bloque `/sgi/` que el servidor: http://localhost:8096/sgi/
 - App directa, sin nginx: http://localhost:8095/
 
 Solo la app web, sin Docker: `PORTAL_DATOS` apunta a una carpeta con `current` (la copia del

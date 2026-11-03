@@ -4,8 +4,9 @@
 # docker-compose.servidor.yml para unirse a la red del portal; el nginx de portal-interno
 # lo publica en /sgi/ (ver README, "Despliegue").
 #
-# Desarrollo con una copia local del disco y un nginx de prueba en http://localhost:8096/sgi/:
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# Qué archivos se combinan lo define COMPOSE_FILE en el .env: en el servidor, con
+# docker-compose.servidor.yml; en desarrollo, con docker-compose.dev.yml (copia local del
+# disco y nginx de prueba en http://localhost:8096/sgi/). Después: docker compose up -d --build
 name: portal-sgi
 
 services:
