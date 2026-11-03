@@ -97,6 +97,13 @@ def test_subcarpetas_numeradas_primero_y_orden_natural(index):
     assert [s.slug for s in controles.sections] == ["ventas", "ventas-2", "2018", "2019"]
 
 
+def test_carpetas_por_anio_mas_reciente_primero(make_tree):
+    index = build_index(make_tree({"10. CONTROLES DE AÑOS ANTERIORES": {
+        "2018": {"a.pdf": 1}, "2025": {"b.pdf": 1}, "2019": {"c.pdf": 1},
+    }}))
+    assert [s.title for s in index.root.sections[0].sections] == ["2025", "2019", "2018"]
+
+
 def test_codigos_ordenados_naturalmente(index):
     formularios = index.section("manuales-y-documentacion-neostar/formularios")
     assert [d.info.code for d in formularios.documents] == ["F 7.2-01", "F 8.4-01", "F 9.1-01", "F 10.3-01"]

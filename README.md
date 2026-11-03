@@ -65,6 +65,19 @@ repetida (`.pdf.pdf`), versiones viejas en la misma carpeta y carpetas vacías.
 | Documentación | Una tarjeta por carpeta principal del disco. Título, descripción e ícono en `web/config/portal.toml`; una carpeta nueva aparece igual, con su nombre y un ícono genérico. |
 | Otros documentos | El resto de los archivos de la raíz del disco |
 
+## Navegación
+
+- **Secciones** (`/s/<carpeta>/<subcarpeta>`): una página por carpeta del disco, con ruta de navegación,
+  sus subcarpetas y sus documentos como tarjetas. Los nombres de carpeta en mayúsculas se muestran con
+  mayúsculas y minúsculas, conservando las siglas (`KIA SANTA FE - PV` → `KIA Santa Fe - PV`); los
+  nombres de los documentos se muestran tal cual. Las carpetas por año van de la más reciente a la más vieja.
+- **Documentos**: toda la tarjeta abre la versión vigente; si también hay un editable (Excel, Word), se
+  descarga con su propio botón. La tarjeta muestra código, revisión, fecha de modificación y tamaño.
+- **Buscador** (en el header de todas las páginas, y "Buscar en esta sección" en cada sección): por nombre,
+  código o carpeta, sin acentos ni mayúsculas. Cada palabra busca comienzos de palabra ("capacit" encuentra
+  "Capacitación") y primero aparecen los documentos cuyo nombre contiene la consulta tal cual.
+- **Links viejos**: si un documento cambia de carpeta y su nombre es único, su link anterior redirige al nuevo.
+
 ### Renovación de la certificación
 
 El sello se genera desde el PDF vectorial que entrega el certificador, sin modificar la marca
@@ -105,7 +118,9 @@ portal-sgi/
 │   │   ├── versions.py     # Nombres de archivo, identidad y versión vigente (módulo aislado)
 │   │   ├── indexer.py      # Escaneo del disco → árbol de secciones y documentos
 │   │   ├── store.py        # Índice vigente: se regenera solo después de cada sincronización
-│   │   ├── routes.py       # Home, documentos (/d/…) y estado (/salud)
+│   │   ├── routes.py       # Home, secciones (/s/…), buscador, documentos (/d/…) y estado (/salud)
+│   │   ├── search.py       # Buscador sin acentos ni mayúsculas
+│   │   ├── vistas.py       # Presentación: títulos legibles, íconos por formato
 │   │   ├── templates/      # Plantillas Jinja2
 │   │   └── static/         # CSS con la paleta SGI como variables, imágenes, sello
 │   └── tests/

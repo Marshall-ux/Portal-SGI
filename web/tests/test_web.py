@@ -89,8 +89,8 @@ def test_home_tarjetas_de_secciones(client):
     assert "Manuales y Documentación" in page
     assert "Manual Integrado, procedimientos, instructivos y formularios." in page
     assert 'href="/s/manuales-y-documentacion-neostar"' in page
-    # Carpeta que no está en la configuración: aparece igual, con su nombre del disco
-    assert "CARPETA NUEVA DE SGI" in page
+    # Carpeta que no está en la configuración: aparece igual, con su nombre del disco legible
+    assert "Carpeta Nueva de SGI" in page
     assert 'href="/s/carpeta-nueva-de-sgi"' in page
     assert "Sección 08" in page
 
@@ -106,6 +106,53 @@ def test_sin_copia_publicada_muestra_preparando(tmp_path):
     r = client.get("/")
     assert r.status_code == 503
     assert "Estamos preparando el portal" in html(r)
+
+
+# ── Secciones y buscador ────────────────────────────────────────────────────
+
+
+def test_pagina_de_seccion(client):
+    r = client.get("/s/manuales-y-documentacion-neostar")
+    page = html(r)
+    assert r.status_code == 200
+    # Breadcrumb y título desde config/portal.toml
+    assert 'aria-label="Ruta de navegación"' in page and 'href="/"' in page
+    assert '<h1 class="titulo-seccion">Manuales y Documentación</h1>' in page
+    # Tarjeta de documento: enlace a la vigente, código, revisión y botón del otro formato
+    assert 'href="/d/manuales-y-documentacion-neostar/f-8-4-01-autorizacion-generica"' in page
+    assert "F 8.4-01" in page and "Rev. 07" in page
+    assert 'href="/d/manuales-y-documentacion-neostar/f-8-4-01-autorizacion-generica?formato=xls"' in page
+    # Buscador acotado a la sección
+    assert 'name="en" value="manuales-y-documentacion-neostar"' in page
+
+
+def test_seccion_inexistente(client):
+    assert client.get("/s/no-existe").status_code == 404
+
+
+def test_buscador(client):
+    page = html(client.get("/buscar?q=autorizacion"))
+    assert "Resultados para «autorizacion»" in page
+    assert "1 documento" in page
+    assert 'href="/d/manuales-y-documentacion-neostar/f-8-4-01-autorizacion-generica"' in page
+    assert "Manuales y Documentación" in page  # muestra dónde está el documento
+
+
+def test_buscador_dentro_de_una_seccion(client):
+    page = html(client.get("/buscar?q=informe&en=carpeta-nueva-de-sgi"))
+    assert "en <strong>Carpeta Nueva de SGI</strong>" in page
+    assert 'href="/d/carpeta-nueva-de-sgi/informe"' in page
+    assert "buscar en todo el portal" in page
+
+
+def test_buscador_vacio_y_sin_resultados(client):
+    assert "Buscar documentos" in html(client.get("/buscar?q="))
+    assert "No encontramos documentos" in html(client.get("/buscar?q=zzzz"))
+
+
+def test_busqueda_en_el_header_de_todas_las_paginas(client):
+    for ruta in ("/", "/s/manuales-y-documentacion-neostar", "/buscar?q=x"):
+        assert 'id="buscar-portal"' in html(client.get(ruta))
 
 
 # ── Documentos ──────────────────────────────────────────────────────────────
@@ -127,6 +174,12 @@ def test_documento_en_otro_formato_se_descarga(client):
     assert r.headers["Content-Disposition"].startswith("attachment")
     assert "Rev.07.xls" in r.headers["Content-Disposition"]
     r.close()
+
+
+def test_link_viejo_redirige_si_el_documento_cambio_de_carpeta(client):
+    r = client.get("/d/carpeta-vieja/f-8-4-01-autorizacion-generica?formato=xls")
+    assert r.status_code == 302
+    assert r.headers["Location"] == "/d/manuales-y-documentacion-neostar/f-8-4-01-autorizacion-generica?formato=xls"
 
 
 @pytest.mark.parametrize("ruta", [

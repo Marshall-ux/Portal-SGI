@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import fnmatch
 import os
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -257,6 +258,9 @@ class _Builder:
         return docs
 
 
+_ANIO = re.compile(r"(19|20)\d{2}")
+
+
 def _sort_key(info: ParsedName) -> tuple:
     """Primero los numerados ("01.", "02."…) por número; después, por nombre."""
     return (info.order is None, info.order or 0, natural_key(info.label))
@@ -267,6 +271,9 @@ def _finalize(section: Section, index: Index) -> None:
     index._sections[section.path] = section
 
     section.sections.sort(key=lambda s: _sort_key(s.info))
+    # Carpetas por año ("2018", "2019"…): primero la más reciente
+    if section.sections and all(_ANIO.fullmatch(s.title) for s in section.sections):
+        section.sections.reverse()
     used: set[str] = set()
     for child in section.sections:
         child.slug = _unique(slugify(child.title), used)
