@@ -54,6 +54,30 @@ revisión (la fecha ya la toma del archivo), dobles espacios y mayúsculas mezcl
 **Qué marca el reporte para corregir:** nombres que empiezan con guion bajo, extensión
 repetida (`.pdf.pdf`), versiones viejas en la misma carpeta y carpetas vacías.
 
+## Qué muestra la home
+
+| Bloque | De dónde sale |
+|---|---|
+| Aclaración debajo del título | Variable `PORTAL_AVISO` del `.env` |
+| Última actualización | Fecha y hora de la última sincronización correcta (`sync.json`) |
+| Accesos rápidos | Documentos de la raíz del disco cuyo nombre empieza con `00.` (hoy: Guía de Acceso y Mapa de Proceso). Para sumar otro, SGI lo copia a la raíz como `00. Nombre.pdf`. |
+| Certificación vigente | Sello e información de `web/config/portal.toml` |
+| Documentación | Una tarjeta por carpeta principal del disco. Título, descripción e ícono en `web/config/portal.toml`; una carpeta nueva aparece igual, con su nombre y un ícono genérico. |
+| Otros documentos | El resto de los archivos de la raíz del disco |
+
+### Renovación de la certificación
+
+El sello se genera desde el PDF vectorial que entrega el certificador, sin modificar la marca
+(página completa, sin recortes ni efectos, colores convertidos con perfil ICC):
+
+```bash
+pip install pymupdf
+python tools/render_sello.py "<sello del certificador>.pdf" web/app/static/img/certificacion/<nombre>
+```
+
+Después se actualiza la sección `[certificacion]` de `web/config/portal.toml` (ID, normas,
+nombre del sello y dirección de verificación, que es la misma del QR).
+
 ## Estructura
 
 ```
@@ -61,11 +85,16 @@ portal-sgi/
 ├── docker-compose.yml      # Servicios y volúmenes (SMB del disco I + datos)
 ├── docker-compose.dev.yml  # Desarrollo: copia local del disco en lugar del SMB
 ├── .env.example            # Configuración (copiar a .env)
+├── tools/render_sello.py    # PDF del certificador → imágenes del sello
 ├── web/                    # App Flask (páginas, índice en memoria, entrega de archivos)
+│   ├── config/portal.toml  # Presentación: secciones (títulos, descripciones, íconos) y certificación
 │   ├── app/
 │   │   ├── versions.py     # Nombres de archivo, identidad y versión vigente (módulo aislado)
 │   │   ├── indexer.py      # Escaneo del disco → árbol de secciones y documentos
-│   │   └── store.py        # Índice vigente: se regenera solo después de cada sincronización
+│   │   ├── store.py        # Índice vigente: se regenera solo después de cada sincronización
+│   │   ├── routes.py       # Home, documentos (/d/…) y estado (/salud)
+│   │   ├── templates/      # Plantillas Jinja2
+│   │   └── static/         # CSS con la paleta SGI como variables, imágenes, sello
 │   └── tests/
 └── sync/                   # Sincronización diaria del disco
     ├── sincronizar.sh      # Copia → validación → publicación atómica
@@ -117,6 +146,14 @@ Con una copia del disco en la PC (por defecto `C:/Temp/DocumentacionISO`, variab
 ```bash
 cp .env.example .env
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+Solo la app web, sin Docker: `PORTAL_DATOS` apunta a una carpeta con `current` (la copia del
+disco, o un enlace a ella) y opcionalmente `sync.json`.
+
+```bash
+cd web
+PORTAL_DATOS=/ruta/a/datos .venv/Scripts/python -m flask --app "app:create_app" run --debug
 ```
 
 ## Tests
