@@ -1,0 +1,28 @@
+# Portal SGI.
+# En el servidor, estos servicios se suman al docker-compose.yml de portal-interno
+# (ver README). Este archivo sirve para desarrollo y como referencia.
+#
+# Desarrollo con una copia local del disco (sin credenciales SMB):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+name: portal-sgi
+
+services:
+  sync:
+    build: ./sync
+    env_file: .env
+    volumes:
+      - disco-sgi:/mnt/disco:ro
+      - sgi-data:/data
+    restart: always
+
+volumes:
+  # Copias del disco, el enlace "current", sync.json y los logs.
+  sgi-data:
+
+  # Disco I de SGI: Docker monta el recurso SMB en solo lectura al iniciar el servicio.
+  disco-sgi:
+    driver: local
+    driver_opts:
+      type: cifs
+      device: "//${SMB_SERVIDOR:-192.168.41.5}/${SMB_RECURSO:-iso}"
+      o: "addr=${SMB_SERVIDOR:-192.168.41.5},username=${SMB_USUARIO:-},password=${SMB_CLAVE:-},domain=${SMB_DOMINIO:-WORKGROUP},vers=${SMB_VERSION:-2.1},ro,iocharset=utf8,noperm"
