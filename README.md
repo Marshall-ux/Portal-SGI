@@ -80,8 +80,9 @@ nombre del sello y dirección de verificación, que es la misma del QR).
 
 ### Avatar de SGI
 
-Las imágenes del avatar (hero, header y favicon) se generan desde el original del departamento.
-El dibujo no se modifica: se encuadra en un círculo para integrarlo con el fondo del portal.
+El avatar aparece en el hero de la home (el header y la pestaña del navegador usan las siglas SGI).
+Sus imágenes se generan desde el original del departamento; el dibujo no se modifica: se encuadra
+en un círculo para integrarlo con el fondo del portal.
 
 ```bash
 pip install pillow
@@ -97,7 +98,7 @@ portal-sgi/
 ├── .env.example            # Configuración (copiar a .env)
 ├── tools/
 │   ├── render_sello.py     # PDF del certificador → imágenes del sello
-│   └── preparar_avatar.py  # Avatar original de SGI → hero, header y favicon
+│   └── preparar_avatar.py  # Avatar original de SGI → imágenes del hero
 ├── web/                    # App Flask (páginas, índice en memoria, entrega de archivos)
 │   ├── config/portal.toml  # Presentación: secciones (títulos, descripciones, íconos) y certificación
 │   ├── app/

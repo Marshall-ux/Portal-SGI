@@ -1,4 +1,4 @@
-"""Genera las imágenes del avatar de SGI para el portal a partir del original.
+"""Genera las imágenes del avatar de SGI para el hero de la home a partir del original.
 
 Uso:
     pip install pillow
@@ -8,9 +8,9 @@ El original (1254×1254, escudo con check sobre un degradé con halo circular) n
 transparencia. El dibujo no se modifica: se encuadra en un círculo con borde suavizado,
 así se integra con el fondo del portal en lugar de verse como un recuadro.
 
-  avatar-sgi-320.webp / -640.webp   hero: el escudo con su halo
-  avatar-sgi-icono-96.png           header: recorte cerrado sobre el escudo, legible a 44 px
-  favicon-32.png / favicon-64.png   pestaña del navegador (mismo recorte)
+  avatar-sgi-320.webp / -640.webp   el escudo con su halo
+
+El header y el favicon usan las siglas SGI, no el avatar.
 """
 import os
 import sys
@@ -18,9 +18,8 @@ import sys
 from PIL import Image, ImageDraw
 
 # Medidas sobre el original de 1254 px (se escalan si el original tiene otro tamaño)
-HALO = (626, 607, 560)    # centro x, centro y, radio del encuadre del hero (halo + brillo)
-ESCUDO = (625, 604, 380)  # centro x, centro y, radio del encuadre chico (escudo)
-SUAVIZADO = 4             # la máscara se dibuja 4 veces más grande y se reduce: borde sin serrucho
+HALO = (626, 607, 560)  # centro x, centro y, radio del encuadre (halo + brillo)
+SUAVIZADO = 4           # la máscara se dibuja 4 veces más grande y se reduce: borde sin serrucho
 
 
 def recorte_circular(img: Image.Image, cx: int, cy: int, r: int) -> Image.Image:
@@ -44,12 +43,6 @@ def main(origen: str, destino: str) -> None:
     for lado in (320, 640):
         ruta = os.path.join(destino, f"avatar-sgi-{lado}.webp")
         hero.resize((lado, lado), Image.LANCZOS).save(ruta, "WEBP", quality=90, method=6)
-        print(ruta)
-
-    escudo = recorte_circular(img, *medir(ESCUDO))
-    for nombre, lado in (("avatar-sgi-icono-96.png", 96), ("favicon-32.png", 32), ("favicon-64.png", 64)):
-        ruta = os.path.join(destino, nombre)
-        escudo.resize((lado, lado), Image.LANCZOS).save(ruta, "PNG", optimize=True)
         print(ruta)
 
 
