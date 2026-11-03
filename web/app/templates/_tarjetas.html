@@ -1,0 +1,69 @@
+{# Tarjetas y ruta de navegación. Uso: {% from "_tarjetas.html" import tarjeta_seccion, tarjeta_documento, ruta_navegacion %} #}
+{% from "_iconos.html" import icono, simbolo %}
+
+{# Sección: toda la tarjeta es el enlace. #}
+{% macro tarjeta_seccion(section, etiqueta="Carpeta") -%}
+{% set v = vista(section) %}
+<a class="tarjeta" href="{{ url_for('portal.seccion', ruta=section.path) }}">
+  <span class="tarjeta-arriba">
+    {{ icono(v.icono) }}
+    <span class="tarjeta-info">
+      <span class="tarjeta-etiqueta">{{ etiqueta }}{% if etiqueta == "Sección" and section.info.order is not none %} {{ '%02d' % section.info.order }}{% endif %}</span>
+      <span class="tarjeta-titulo">{{ v.titulo }}</span>
+      {% if v.descripcion %}<span class="tarjeta-desc">{{ v.descripcion }}</span>{% endif %}
+    </span>
+  </span>
+  <span class="tarjeta-pie">
+    <span>Ingresar <small>· {{ section.document_count }} {{ "documento" if section.document_count == 1 else "documentos" }}</small></span>
+    <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>
+  </span>
+</a>
+{%- endmacro %}
+
+{# Documento: toda la tarjeta abre la versión vigente (enlace estirado sobre la tarjeta);
+   los otros formatos son botones propios por encima. #}
+{% macro tarjeta_documento(doc, mostrar_ruta=False) -%}
+{% set principal = doc.primary %}
+<article class="tarjeta tarjeta-doc">
+  <div class="tarjeta-arriba">
+    {{ icono(icono_documento(doc)) }}
+    <div class="tarjeta-info">
+      <span class="tarjeta-etiqueta">{{ doc.info.code or (principal.ext | formato) }}</span>
+      <h3 class="tarjeta-titulo">
+        <a class="enlace-tarjeta" href="{{ url_for('portal.documento', ruta=doc.path) }}" target="_blank" rel="noopener"
+           title="{{ principal.name }}">{{ doc.info.title }}</a>
+      </h3>
+      {% if mostrar_ruta %}
+        <span class="tarjeta-ruta">{% for v in migas(doc.section) %}{{ v.titulo }}{{ " › " if not loop.last }}{% else %}Inicio{% endfor %}</span>
+      {% endif %}
+      <span class="tarjeta-meta">
+        {%- if doc.info.rev is not none %}<span class="rev">Rev. {{ '%02d' % doc.info.rev }}</span> · {% endif -%}
+        <span title="Fecha de modificación">{{ principal.mtime | fecha_corta }}</span> · {{ principal.size | tamano }}
+      </span>
+      <span class="formatos">
+        <span class="chip">{{ principal.ext | formato }}</span>
+        {% for ext, version in doc.formats.items() if ext != principal.ext %}
+          <a class="chip chip-enlace" href="{{ url_for('portal.documento', ruta=doc.path, formato=ext) }}"
+             title="Descargar {{ version.name }}">{{ simbolo("descarga") }} {{ ext | formato }}</a>
+        {% endfor %}
+      </span>
+    </div>
+    <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>
+  </div>
+</article>
+{%- endmacro %}
+
+{# Ruta de navegación (breadcrumb). #}
+{% macro ruta_navegacion(section) -%}
+<nav class="migas" aria-label="Ruta de navegación">
+  <ol>
+    <li><a href="{{ url_for('portal.home') }}">{{ simbolo("inicio") }}<span>Inicio</span></a></li>
+    {% for v in migas(section) %}
+      <li>{{ simbolo("separador", "migas-sep") }}
+        {% if loop.last %}<span aria-current="page">{{ v.titulo }}</span>
+        {% else %}<a href="{{ url_for('portal.seccion', ruta=v.seccion.path) }}">{{ v.titulo }}</a>{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</nav>
+{%- endmacro %}

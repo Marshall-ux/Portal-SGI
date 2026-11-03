@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_iconos.html" import icono, icono_norma, simbolo %}
+{% from "_tarjetas.html" import tarjeta_seccion with context %}
 
 {% block contenido %}
 <section class="contenedor hero">
@@ -83,22 +84,7 @@
     <p class="subtitulo">Seleccioná una categoría para acceder a la información.</p>
   </div>
   <div class="grilla">
-    {% for v in secciones %}
-      <a class="tarjeta" href="{{ url_for('portal.seccion', ruta=v.seccion.path) }}">
-        <span class="tarjeta-arriba">
-          {{ icono(v.icono) }}
-          <span class="tarjeta-info">
-            <span class="tarjeta-etiqueta">Sección{% if v.seccion.info.order is not none %} {{ '%02d' % v.seccion.info.order }}{% endif %}</span>
-            <span class="tarjeta-titulo">{{ v.titulo }}</span>
-            {% if v.descripcion %}<span class="tarjeta-desc">{{ v.descripcion }}</span>{% endif %}
-          </span>
-        </span>
-        <span class="tarjeta-pie">
-          <span>Ingresar <small>· {{ v.seccion.document_count }} documentos</small></span>
-          <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>
-        </span>
-      </a>
-    {% endfor %}
+    {% for s in secciones %}{{ tarjeta_seccion(s, etiqueta="Sección") }}{% endfor %}
   </div>
 </section>
 

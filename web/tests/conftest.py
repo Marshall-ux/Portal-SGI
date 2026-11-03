@@ -27,7 +27,9 @@ def make_tree(tmp_path):
     def factory(spec):
         root = tmp_path / "disco"
         root.mkdir()
-        _make(str(root), spec)
+        # En Windows, la carpeta temporal de pytest más los nombres reales superan 260 caracteres
+        base = "\\\\?\\" + os.path.abspath(root) if os.name == "nt" else str(root)
+        _make(base, spec)
         return str(root)
 
     return factory

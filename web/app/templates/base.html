@@ -1,3 +1,4 @@
+{% from "_iconos.html" import simbolo %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -21,6 +22,11 @@
         <span class="marca-divisor" aria-hidden="true"></span>
         <span class="marca-lema"><span>Sistema de Gestión</span><span class="acento">Integrado</span></span>
       </a>
+      <form class="buscador buscador-cabecera" action="{{ url_for('portal.buscar') }}" role="search">
+        <label class="oculto" for="buscar-portal">Buscar en el portal</label>
+        <input id="buscar-portal" type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre o código" autocomplete="off">
+        <button type="submit" aria-label="Buscar">{{ simbolo("buscar") }}</button>
+      </form>
     </div>
   </header>
 

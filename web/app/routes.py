@@ -1,12 +1,13 @@
-"""Rutas del portal: home, documentos y estado."""
+"""Rutas del portal: home, secciones, buscador, documentos y estado."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from flask import (Blueprint, abort, current_app, jsonify, redirect, render_template, request,
+                   send_file, url_for)
 
-from flask import Blueprint, abort, current_app, jsonify, render_template, request, send_file
-
-from .indexer import Document, Section
+from .indexer import Document, Index, Section
+from .search import buscar as buscar_en
 from .store import IndexStore
+from .vistas import icono_documento, migas, vista_seccion
 
 bp = Blueprint("portal", __name__)
 
@@ -14,65 +15,71 @@ bp = Blueprint("portal", __name__)
 FORMATOS_EN_LINEA = {"pdf", "mp4", "png", "jpg", "jpeg"}
 
 
-@dataclass(frozen=True)
-class SeccionVista:
-    """Datos de una sección listos para su tarjeta."""
-
-    seccion: Section
-    titulo: str
-    descripcion: str
-    icono: str
-
-
 def _store() -> IndexStore:
     return current_app.extensions["store"]
 
 
-def vista_seccion(section: Section) -> SeccionVista:
-    """Título, descripción e ícono desde config/portal.toml; si no figura, lo que dice el disco."""
-    cfg = current_app.config["PORTAL"].get("secciones", {}).get(section.slug, {})
-    return SeccionVista(
-        seccion=section,
-        titulo=cfg.get("titulo", section.title),
-        descripcion=cfg.get("descripcion", ""),
-        icono=cfg.get("icono", "carpeta"),
-    )
+def _index_o_preparando() -> Index:
+    index = _store().get()
+    if index is None:
+        abort(503)
+    return index
+
+
+@bp.app_context_processor
+def ayudantes():
+    """Funciones disponibles en todas las plantillas."""
+    config = current_app.config["PORTAL"]
+    return {
+        "vista": lambda section: vista_seccion(section, config),
+        "migas": lambda section: migas(section, config),
+        "icono_documento": icono_documento,
+        "q": request.args.get("q", ""),
+    }
 
 
 @bp.get("/")
 def home():
-    index = _store().get()
-    estado = _store().status()
-    if index is None:
-        return render_template("preparando.html", estado=estado), 503
-
+    index = _index_o_preparando()
     raiz = index.root.documents
     return render_template(
         "home.html",
-        estado=estado,
+        estado=_store().status(),
         # Los documentos "00." de la raíz son los accesos rápidos (Guía de Acceso, Mapa de Proceso)
         accesos=[d for d in raiz if d.info.order == 0],
         otros=[d for d in raiz if d.info.order != 0],
-        secciones=[vista_seccion(s) for s in index.root.sections],
+        secciones=index.root.sections,
         cert=current_app.config["PORTAL"].get("certificacion"),
     )
 
 
 @bp.get("/s/<path:ruta>")
 def seccion(ruta: str):
-    # La navegación por secciones llega en la próxima etapa.
-    index = _store().get()
-    if index is None or index.section(ruta) is None:
+    section = _index_o_preparando().section(ruta)
+    if section is None:
         abort(404)
-    return render_template("en_construccion.html", seccion=vista_seccion(index.section(ruta))), 501
+    return render_template("seccion.html", seccion=section)
+
+
+@bp.get("/buscar")
+def buscar():
+    index = _index_o_preparando()
+    dentro: Section | None = index.section(request.args.get("en", "")) if request.args.get("en") else None
+    resultados = buscar_en(index, request.args.get("q", ""), dentro)
+    return render_template("buscar.html", resultados=resultados, dentro=dentro)
 
 
 @bp.get("/d/<path:ruta>")
 def documento(ruta: str):
     """Abre la versión vigente del documento. ?formato=xls elige otro formato."""
-    index = _store().get()
-    doc: Document | None = index.document(ruta) if index else None
+    index = _index_o_preparando()
+    doc: Document | None = index.document(ruta)
     if doc is None:
+        # Link viejo: si el documento cambió de carpeta y su nombre es único, se redirige
+        slug = ruta.strip("/").rsplit("/", 1)[-1]
+        candidatos = [d for d in index.documents if d.slug == slug]
+        if len(candidatos) == 1:
+            return redirect(url_for("portal.documento", ruta=candidatos[0].path, **request.args))
         abort(404)
     formato = request.args.get("formato")
     version = doc.formats.get(formato.lower()) if formato else doc.primary
@@ -103,4 +110,10 @@ def salud():
 @bp.app_errorhandler(404)
 def no_encontrado(_error):
     return render_template("error.html", titulo="No encontramos esa página",
-                           mensaje="Puede que el documento haya cambiado de lugar o de nombre."), 404
+                           mensaje="Puede que el documento haya cambiado de lugar o de nombre. "
+                                   "Probá con el buscador."), 404
+
+
+@bp.app_errorhandler(503)
+def preparando(_error):
+    return render_template("preparando.html", estado=_store().status()), 503
