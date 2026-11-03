@@ -1,4 +1,4 @@
-# El repo se usa desde Windows y corre en Linux (WSL): siempre LF,
+# El repo se usa desde Windows y corre en Linux (servidor Ubuntu): siempre LF,
 # así los scripts .sh no se rompen por saltos de línea CRLF.
 * text=auto eol=lf
 *.png binary

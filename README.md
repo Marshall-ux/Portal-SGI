@@ -126,9 +126,10 @@ python tools/preparar_avatar.py "<avatar original>.png" web/app/static/img/avata
 ```
 portal-sgi/
 ├── docker-compose.yml      # sgi-sync, sgi-web y volúmenes (SMB del disco I + datos)
+├── docker-compose.servidor.yml  # Servidor: sgi-web en la red del portal de I+D
 ├── docker-compose.dev.yml  # Desarrollo: copia local del disco y nginx de prueba
 ├── nginx/
-│   ├── sgi.conf            # Bloque /sgi/ que incluye el nginx de portal-interno
+│   ├── sgi.conf            # Bloque /sgi/ para el nginx de portal-interno
 │   └── dev.conf            # nginx mínimo para desarrollo
 ├── .env.example            # Configuración (copiar a .env)
 ├── tools/
@@ -156,11 +157,11 @@ portal-sgi/
 
 ## Sincronización del disco
 
-El portal no lee el disco I en vivo. El servicio `sync` lo copia una vez por día (`SYNC_HORARIO`,
+El portal no lee el disco I en vivo. El servicio `sgi-sync` lo copia una vez por día (`SYNC_HORARIO`,
 por defecto a las 6:00) a un volumen local, y el portal lee esa copia.
 
 ```
-\\192.168.41.5\iso ──SMB, solo lectura──▶ sync ──▶ volumen sgi-data
+\\192.168.41.5\iso ──SMB, solo lectura──▶ sgi-sync ──▶ volumen sgi-data
                                                     ├── snapshots/<fecha>/   copias
                                                     ├── current → snapshots/<la publicada>
                                                     ├── sync.json            estado
@@ -181,104 +182,101 @@ Cada sincronización:
 Si algo falla, **la copia publicada no cambia**: el error queda en `logs/sync.log` y en
 `sync.json`, y el portal sigue mostrando la fecha de la última sincronización correcta.
 
-Comandos útiles (en el servidor, desde la carpeta de portal-interno):
+Comandos útiles (en el servidor, desde `/opt/portal/portal-interno/portal-sgi`):
 
 ```bash
-docker compose exec sgi-sync sincronizar            # sincronizar ahora
-docker compose exec sgi-sync sincronizar --forzar   # publicar aunque falten muchos archivos (borrado intencional)
-docker compose exec sgi-sync cat /data/sync.json    # estado de la última sincronización
-docker compose exec sgi-sync tail -n 30 /data/logs/sync.log
-docker compose logs --tail=50 sgi-sync sgi-web
+sudo docker compose exec sgi-sync sincronizar            # sincronizar ahora
+sudo docker compose exec sgi-sync sincronizar --forzar   # publicar aunque falten muchos archivos (borrado intencional)
+sudo docker compose exec sgi-sync cat /data/sync.json    # estado de la última sincronización
+sudo docker compose exec sgi-sync tail -n 30 /data/logs/sync.log
+sudo docker compose logs --tail=50 sgi-sync sgi-web
 ```
 
 ## Despliegue
 
 El portal SGI se publica en **`http://<servidor>/sgi/`** a través del nginx de
-[portal-interno](https://github.com/lsantori-neo/portal-interno), como una app más: este repo entra
-como submódulo en `portal-interno/portal-sgi` y portal-interno incluye su `docker-compose.yml`.
-La configuración del portal SGI (servicios, volúmenes, `.env`, bloque de nginx) queda en este repo.
+[portal-interno](https://github.com/lsantori-neo/portal-interno). En el servidor de I+D
+(`id2026-linux`) corre como **proyecto Docker propio** en `/opt/portal/portal-interno/portal-sgi`,
+igual que extractor-datos o proceso-compra: `sgi-web` se une a la red `portal-interno_portal-net`
+(`docker-compose.servidor.yml`) y el nginx de portal-interno lo alcanza por nombre.
 
 ```
 nginx de portal-interno ──/sgi/──▶ sgi-web (Flask + gunicorn, :5001) ──lee──▶ volumen sgi-data
-                                                                                  ▲ escribe
+   (red portal-interno_portal-net)                                                ▲ escribe
 \\192.168.41.5\iso ──SMB, solo lectura──▶ sgi-sync (rsync + cron) ────────────────┘
 ```
 
-Requisitos del servidor: Docker Compose 2.20 o posterior (usa `include`; verificar con
-`docker compose version`) y acceso de red al puerto 445 de 192.168.41.5.
+Así, actualizar o reiniciar el portal SGI no toca a las demás apps, y del lado de portal-interno
+solo se agrega un bloque en `nginx/nginx.conf`.
 
-### Cambios en portal-interno (una sola vez)
+### Primera instalación
 
-1. Submódulo:
+1. Clonar el repo:
 
    ```bash
-   git submodule add -b main https://github.com/Marshall-ux/Portal-SGI.git portal-sgi
+   cd /opt/portal/portal-interno
+   git clone -b main https://github.com/Marshall-ux/Portal-SGI.git portal-sgi
    ```
 
-2. `docker-compose.yml`: incluir el compose del portal SGI y dar al nginx acceso a su red y a su bloque
-   de configuración.
+2. Configurar (credenciales de la cuenta de servicio de IT, solo lectura sobre `\\192.168.41.5\iso`):
 
-   ```yaml
-   include:
-     - ./portal-sgi/docker-compose.yml
-
-   services:
-     nginx:
-       # …lo que ya tiene…
-       volumes:
-         - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-         - ./portal:/usr/share/nginx/portal
-         - ./portal-sgi/nginx/sgi.conf:/etc/nginx/sgi.conf:ro    # nuevo
-       networks:
-         - portal-net
-         - default                                               # nuevo: red de sgi-web
+   ```bash
+   cd portal-sgi
+   cp .env.example .env && chmod 600 .env
+   nano .env        # SMB_USUARIO, SMB_CLAVE (sin comas), SMB_DOMINIO
    ```
 
-3. `nginx/nginx.conf`, dentro del bloque `server`:
+   `COMPOSE_FILE` ya apunta a `docker-compose.servidor.yml`, así que alcanza con `docker compose`
+   sin `-f`.
 
-   ```nginx
-   include /etc/nginx/sgi.conf;   # portal SGI en /sgi/
+3. Levantar y seguir la primera sincronización (mientras corre, `/sgi/` muestra "Estamos
+   preparando el portal"):
+
+   ```bash
+   sudo docker compose up -d --build
+   sudo docker compose logs -f sgi-sync
    ```
 
-   [`nginx/sgi.conf`](nginx/sgi.conf) resuelve `sgi-web` en cada pedido: si el portal SGI está caído,
-   nginx arranca igual y las demás apps no se ven afectadas (`/sgi/` responde 502 hasta que vuelva).
+4. Publicar en nginx: pegar el bloque de [`nginx/sgi.conf`](nginx/sgi.conf) dentro del `server` de
+   `/opt/portal/portal-interno/nginx/nginx.conf`, y recargar. No reinicia ningún contenedor: las
+   demás apps no se cortan.
 
-4. Opcional: una tarjeta en `portal/index.html` que lleve a `/sgi/`.
+   ```bash
+   sudo docker exec portal-interno-nginx-1 grep -c 'location /sgi/' /etc/nginx/nginx.conf   # tiene que dar 1
+   sudo docker exec portal-interno-nginx-1 nginx -t
+   sudo docker exec portal-interno-nginx-1 nginx -s reload
+   ```
 
-### En el servidor
+   El `nginx.conf` está montado en el contenedor como archivo suelto: hay que editarlo en el mismo
+   archivo (`nano` sirve; `sed -i` no, porque crea un archivo nuevo y el contenedor sigue viendo el
+   viejo). Por eso el primer comando verifica, desde adentro del contenedor, que el bloque esté.
 
-```bash
-cd /mnt/c/portal-interno
-git pull
-git submodule update --init portal-sgi
-cp portal-sgi/.env.example portal-sgi/.env    # completar SMB_USUARIO, SMB_CLAVE y SMB_DOMINIO
-chmod 600 portal-sgi/.env
-docker compose up -d --build
-docker compose logs -f sgi-sync               # la primera sincronización arranca sola
-```
+   `sgi-web` se resuelve en cada pedido: si el portal SGI está caído, nginx sigue funcionando para
+   las demás apps y `/sgi/` responde 502 hasta que vuelva.
 
-Mientras corre la primera sincronización, `/sgi/` muestra "Estamos preparando el portal".
+5. Probar `http://<servidor>/sgi/` y `http://<servidor>/sgi/salud`.
 
 ### Actualizar el portal SGI
 
-Como las demás apps de portal-interno (ver su `FLUJO-GIT.md`):
-
 ```bash
-git submodule update --remote portal-sgi
-docker compose up -d --build sgi-web sgi-sync
-git add portal-sgi && git commit -m "Actualizo portal-sgi a última versión" && git push
+cd /opt/portal/portal-interno/portal-sgi
+git pull
+sudo docker compose up -d --build
 ```
 
 ## Desarrollo local
 
-Con una copia del disco en la PC (por defecto `C:/Temp/DocumentacionISO`, variable `SGI_DISCO_LOCAL`):
+Con una copia del disco en la PC (por defecto `C:/Temp/DocumentacionISO`, variable `SGI_DISCO_LOCAL`).
+En el `.env` se cambia `COMPOSE_FILE` por el par de desarrollo, así todos los comandos (`up`, `logs`,
+`exec`…) se escriben igual que en el servidor, sin `-f`:
 
 ```bash
 cp .env.example .env
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# en .env:  COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+docker compose up -d --build
 ```
 
-- Portal a través de un nginx que replica el de portal-interno: http://localhost:8096/sgi/
+- Portal a través de un nginx de prueba con el mismo bloque `/sgi/` que el servidor: http://localhost:8096/sgi/
 - App directa, sin nginx: http://localhost:8095/
 
 Solo la app web, sin Docker: `PORTAL_DATOS` apunta a una carpeta con `current` (la copia del
