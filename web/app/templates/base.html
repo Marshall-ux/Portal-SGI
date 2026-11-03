@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block titulo %}Información Documentada{% endblock %} · SGI Neostar</title>
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/avatar/favicon-32.png') }}">
+  <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='img/avatar/favicon-64.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
@@ -16,8 +17,8 @@
   <header class="cabecera">
     <div class="contenedor cabecera-interior">
       <a class="marca" href="{{ url_for('portal.home') }}" aria-label="Portal SGI, inicio">
-        {# Provisorio: se reemplaza por el avatar de SGI #}
-        <span class="marca-sgi" aria-hidden="true">SGI</span>
+        <img class="marca-avatar" src="{{ url_for('static', filename='img/avatar/avatar-sgi-icono-96.png') }}"
+             width="44" height="44" alt="" aria-hidden="true">
         <img class="marca-neostar" src="{{ url_for('static', filename='img/neostar-logo.jpg') }}" alt="Neostar">
         <span class="marca-divisor" aria-hidden="true"></span>
         <span class="marca-lema"><span>Sistema de Gestión</span><span class="acento">Integrado</span></span>

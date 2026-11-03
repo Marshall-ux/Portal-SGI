@@ -78,6 +78,16 @@ python tools/render_sello.py "<sello del certificador>.pdf" web/app/static/img/c
 Después se actualiza la sección `[certificacion]` de `web/config/portal.toml` (ID, normas,
 nombre del sello y dirección de verificación, que es la misma del QR).
 
+### Avatar de SGI
+
+Las imágenes del avatar (hero, header y favicon) se generan desde el original del departamento.
+El dibujo no se modifica: se encuadra en un círculo para integrarlo con el fondo del portal.
+
+```bash
+pip install pillow
+python tools/preparar_avatar.py "<avatar original>.png" web/app/static/img/avatar
+```
+
 ## Estructura
 
 ```
@@ -85,7 +95,9 @@ portal-sgi/
 ├── docker-compose.yml      # Servicios y volúmenes (SMB del disco I + datos)
 ├── docker-compose.dev.yml  # Desarrollo: copia local del disco en lugar del SMB
 ├── .env.example            # Configuración (copiar a .env)
-├── tools/render_sello.py    # PDF del certificador → imágenes del sello
+├── tools/
+│   ├── render_sello.py     # PDF del certificador → imágenes del sello
+│   └── preparar_avatar.py  # Avatar original de SGI → hero, header y favicon
 ├── web/                    # App Flask (páginas, índice en memoria, entrega de archivos)
 │   ├── config/portal.toml  # Presentación: secciones (títulos, descripciones, íconos) y certificación
 │   ├── app/
