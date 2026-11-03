@@ -3,6 +3,7 @@ import pytest
 
 from app.versions import (
     FileVersion,
+    convention_issues,
     group_documents,
     has_rev_conflict,
     identity_key,
@@ -219,6 +220,24 @@ def test_slug_y_orden_natural():
     assert slugify("01. MANUALES  Y DOCUMENTACIÓN NEOSTAR") == "01-manuales-y-documentacion-neostar"
     assert slugify("???") == "sin-nombre"
     assert sorted(["10. X", "2. X", "1. X"], key=natural_key) == ["1. X", "2. X", "10. X"]
+
+
+# ── Convención de nombres ───────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("name, issues", [
+    ("F 7.2-01 - Programa anual de capacitación_Rev.04.xlsx", []),
+    ("F 7.2-01 - Programa anual de capacitación _Rev.04.xlsx", []),  # el espacio antes de "_" se tolera
+    ("EXTINTORES Y TIPOS DE FUEGO.mp4", []),  # sin código: la revisión no es obligatoria
+    ("F 7.2-15 Acta de Dirección.xlsx", [("sin_revision", "")]),
+    ("F 8.4-02 - Listado de Proveedores Aprobados - PS_ ev.03.pdf", [("sin_revision", "")]),  # "ev" en vez de "Rev"
+    ("8.2.1K Proceso Venta de Unidades 0km KIA_ Rev.07.pdf", [("revision_no_estandar", "_ Rev.07")]),
+    ("F 7.2-05 -V5 - VENDEDOR PLAN DE AHORRO_ Rev.04 (Act.24052026).pdf",
+     [("revision_no_estandar", "_ Rev.04 (Act.24052026)")]),
+    ("Autorización uso de imagen_ Rev01.pdf", [("revision_no_estandar", "_ Rev01")]),
+])
+def test_convencion_de_nombres(name, issues):
+    assert convention_issues(parse_name(name)) == issues
 
 
 # ── Versión vigente ─────────────────────────────────────────────────────────
