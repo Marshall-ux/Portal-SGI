@@ -58,17 +58,70 @@ repetida (`.pdf.pdf`), versiones viejas en la misma carpeta y carpetas vacías.
 
 ```
 portal-sgi/
-├── web/                # App Flask (páginas, índice en memoria, entrega de archivos)
+├── docker-compose.yml      # Servicios y volúmenes (SMB del disco I + datos)
+├── docker-compose.dev.yml  # Desarrollo: copia local del disco en lugar del SMB
+├── .env.example            # Configuración (copiar a .env)
+├── web/                    # App Flask (páginas, índice en memoria, entrega de archivos)
 │   ├── app/
-│   │   ├── versions.py # Nombres de archivo, identidad y versión vigente (módulo aislado)
-│   │   └── indexer.py  # Escaneo del disco → árbol de secciones y documentos
+│   │   ├── versions.py     # Nombres de archivo, identidad y versión vigente (módulo aislado)
+│   │   ├── indexer.py      # Escaneo del disco → árbol de secciones y documentos
+│   │   └── store.py        # Índice vigente: se regenera solo después de cada sincronización
 │   └── tests/
-└── sync/               # Sincronización diaria del disco (próxima etapa)
+└── sync/                   # Sincronización diaria del disco
+    ├── sincronizar.sh      # Copia → validación → publicación atómica
+    ├── entrypoint.sh       # Programa el cron y hace la sincronización inicial
+    └── tests/
+```
+
+## Sincronización del disco
+
+El portal no lee el disco I en vivo. El servicio `sync` lo copia una vez por día (`SYNC_HORARIO`,
+por defecto a las 6:00) a un volumen local, y el portal lee esa copia.
+
+```
+\\192.168.41.5\iso ──SMB, solo lectura──▶ sync ──▶ volumen sgi-data
+                                                    ├── snapshots/<fecha>/   copias
+                                                    ├── current → snapshots/<la publicada>
+                                                    ├── sync.json            estado
+                                                    └── logs/sync.log        historial
+```
+
+Cada sincronización:
+
+1. Copia el disco con `rsync` a `snapshots/<fecha>.parcial`, **conservando la fecha de
+   modificación original** de cada archivo (de eso depende la versión vigente). Los archivos
+   que no cambiaron se enlazan a la copia anterior (hardlinks): cada copia nueva casi no ocupa lugar.
+2. Valida: el origen no puede estar vacío (así se ve un montaje caído) y la copia nueva debe tener
+   al menos el 90% de los archivos de la publicada (`SYNC_MIN_PROPORCION`).
+3. Publica cambiando el enlace `current` con un rename atómico: el portal ve la copia anterior o
+   la nueva, nunca una a medio copiar. El portal detecta el cambio y regenera su índice solo.
+4. Conserva las últimas `SYNC_CONSERVAR` copias (3 por defecto) y borra las más viejas.
+
+Si algo falla, **la copia publicada no cambia**: el error queda en `logs/sync.log` y en
+`sync.json`, y el portal sigue mostrando la fecha de la última sincronización correcta.
+
+Comandos útiles (desde la carpeta donde está el `docker-compose.yml`):
+
+```bash
+docker compose exec sync sincronizar            # sincronizar ahora
+docker compose exec sync sincronizar --forzar   # publicar aunque falten muchos archivos (borrado intencional)
+docker compose exec sync cat /data/sync.json    # estado de la última sincronización
+docker compose exec sync tail -n 30 /data/logs/sync.log
+docker compose logs --tail=50 sync
+```
+
+## Desarrollo local
+
+Con una copia del disco en la PC (por defecto `C:/Temp/DocumentacionISO`, variable `SGI_DISCO_LOCAL`):
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
 ## Tests
 
-Desde `web/`:
+App web, desde `web/`:
 
 ```bash
 python -m venv .venv
@@ -78,4 +131,17 @@ python -m venv .venv
 
 Los tests usan árboles de prueba generados al vuelo. Además, si existe una copia real del disco
 en `C:\Temp\DocumentacionISO` (o en la ruta de la variable `SGI_DISCO_PRUEBA`), se corre un test
-extra contra esa copia.
+extra contra esa copia. En Windows se saltean los tests de enlaces simbólicos (requieren permisos
+de administrador); para correrlos todos, en Linux:
+
+```bash
+docker run --rm -v "$PWD/web:/src:ro" python:3.12-slim \
+  sh -c "cp -r /src /app && cd /app && pip install -q pytest && python -m pytest -q -p no:cacheprovider"
+```
+
+Sincronización (corre dentro de la imagen del servicio):
+
+```bash
+docker build -t portal-sgi-sync sync
+docker run --rm -v "$PWD/sync/tests:/tests:ro" --entrypoint bash portal-sgi-sync /tests/test_sincronizar.sh
+```
