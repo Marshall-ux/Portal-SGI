@@ -1,9 +1,9 @@
 # Desarrollo local:
 #  - sgi-sync usa una copia del disco SGI en esta PC (SGI_DISCO_LOCAL) en lugar del recurso SMB;
 #  - sgi-web queda accesible directo en http://localhost:8095/;
-#  - nginx-dev simula el nginx de portal-interno: http://localhost:8096/sgi/
+#  - nginx-dev usa el mismo bloque /sgi/ que el nginx del servidor: http://localhost:8096/sgi/
 #
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+# Se activa con COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml en el .env.
 services:
   sgi-sync:
     volumes:
