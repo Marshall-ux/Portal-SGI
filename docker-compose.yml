@@ -1,13 +1,15 @@
-# Portal SGI.
-# En el servidor, estos servicios se suman al docker-compose.yml de portal-interno
-# (ver README). Este archivo sirve para desarrollo y como referencia.
+# Portal SGI: sincronización del disco (sgi-sync) y app web (sgi-web).
 #
-# Desarrollo con una copia local del disco (sin credenciales SMB):
+# En el servidor, el docker-compose.yml de portal-interno incluye este archivo y su nginx
+# publica la app en /sgi/ (ver README, "Despliegue"). Las variables (.env) se toman de
+# esta misma carpeta.
+#
+# Desarrollo con una copia local del disco y un nginx de prueba en http://localhost:8096/sgi/:
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 name: portal-sgi
 
 services:
-  sync:
+  sgi-sync:
     build: ./sync
     env_file: .env
     volumes:
@@ -15,11 +17,18 @@ services:
       - sgi-data:/data
     restart: always
 
+  sgi-web:
+    build: ./web
+    env_file: .env
+    volumes:
+      - sgi-data:/data:ro
+    restart: always
+
 volumes:
   # Copias del disco, el enlace "current", sync.json y los logs.
   sgi-data:
 
-  # Disco I de SGI: Docker monta el recurso SMB en solo lectura al iniciar el servicio.
+  # Disco I de SGI: Docker monta el recurso SMB en solo lectura al iniciar sgi-sync.
   disco-sgi:
     driver: local
     driver_opts:
