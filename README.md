@@ -125,13 +125,17 @@ python tools/preparar_avatar.py "<avatar original>.png" web/app/static/img/avata
 
 ```
 portal-sgi/
-├── docker-compose.yml      # Servicios y volúmenes (SMB del disco I + datos)
-├── docker-compose.dev.yml  # Desarrollo: copia local del disco en lugar del SMB
+├── docker-compose.yml      # sgi-sync, sgi-web y volúmenes (SMB del disco I + datos)
+├── docker-compose.dev.yml  # Desarrollo: copia local del disco y nginx de prueba
+├── nginx/
+│   ├── sgi.conf            # Bloque /sgi/ que incluye el nginx de portal-interno
+│   └── dev.conf            # nginx mínimo para desarrollo
 ├── .env.example            # Configuración (copiar a .env)
 ├── tools/
 │   ├── render_sello.py     # PDF del certificador → imágenes del sello
 │   └── preparar_avatar.py  # Avatar original de SGI → imágenes del hero
-├── web/                    # App Flask (páginas, índice en memoria, entrega de archivos)
+├── web/                    # App Flask + gunicorn (páginas, índice en memoria, entrega de archivos)
+│   ├── Dockerfile
 │   ├── config/portal.toml  # Presentación: secciones (títulos, descripciones, íconos) y certificación
 │   ├── app/
 │   │   ├── versions.py     # Nombres de archivo, identidad y versión vigente (módulo aislado)
@@ -177,14 +181,92 @@ Cada sincronización:
 Si algo falla, **la copia publicada no cambia**: el error queda en `logs/sync.log` y en
 `sync.json`, y el portal sigue mostrando la fecha de la última sincronización correcta.
 
-Comandos útiles (desde la carpeta donde está el `docker-compose.yml`):
+Comandos útiles (en el servidor, desde la carpeta de portal-interno):
 
 ```bash
-docker compose exec sync sincronizar            # sincronizar ahora
-docker compose exec sync sincronizar --forzar   # publicar aunque falten muchos archivos (borrado intencional)
-docker compose exec sync cat /data/sync.json    # estado de la última sincronización
-docker compose exec sync tail -n 30 /data/logs/sync.log
-docker compose logs --tail=50 sync
+docker compose exec sgi-sync sincronizar            # sincronizar ahora
+docker compose exec sgi-sync sincronizar --forzar   # publicar aunque falten muchos archivos (borrado intencional)
+docker compose exec sgi-sync cat /data/sync.json    # estado de la última sincronización
+docker compose exec sgi-sync tail -n 30 /data/logs/sync.log
+docker compose logs --tail=50 sgi-sync sgi-web
+```
+
+## Despliegue
+
+El portal SGI se publica en **`http://<servidor>/sgi/`** a través del nginx de
+[portal-interno](https://github.com/lsantori-neo/portal-interno), como una app más: este repo entra
+como submódulo en `portal-interno/portal-sgi` y portal-interno incluye su `docker-compose.yml`.
+La configuración del portal SGI (servicios, volúmenes, `.env`, bloque de nginx) queda en este repo.
+
+```
+nginx de portal-interno ──/sgi/──▶ sgi-web (Flask + gunicorn, :5001) ──lee──▶ volumen sgi-data
+                                                                                  ▲ escribe
+\\192.168.41.5\iso ──SMB, solo lectura──▶ sgi-sync (rsync + cron) ────────────────┘
+```
+
+Requisitos del servidor: Docker Compose 2.20 o posterior (usa `include`; verificar con
+`docker compose version`) y acceso de red al puerto 445 de 192.168.41.5.
+
+### Cambios en portal-interno (una sola vez)
+
+1. Submódulo:
+
+   ```bash
+   git submodule add -b main https://github.com/Marshall-ux/Portal-SGI.git portal-sgi
+   ```
+
+2. `docker-compose.yml`: incluir el compose del portal SGI y dar al nginx acceso a su red y a su bloque
+   de configuración.
+
+   ```yaml
+   include:
+     - ./portal-sgi/docker-compose.yml
+
+   services:
+     nginx:
+       # …lo que ya tiene…
+       volumes:
+         - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+         - ./portal:/usr/share/nginx/portal
+         - ./portal-sgi/nginx/sgi.conf:/etc/nginx/sgi.conf:ro    # nuevo
+       networks:
+         - portal-net
+         - default                                               # nuevo: red de sgi-web
+   ```
+
+3. `nginx/nginx.conf`, dentro del bloque `server`:
+
+   ```nginx
+   include /etc/nginx/sgi.conf;   # portal SGI en /sgi/
+   ```
+
+   [`nginx/sgi.conf`](nginx/sgi.conf) resuelve `sgi-web` en cada pedido: si el portal SGI está caído,
+   nginx arranca igual y las demás apps no se ven afectadas (`/sgi/` responde 502 hasta que vuelva).
+
+4. Opcional: una tarjeta en `portal/index.html` que lleve a `/sgi/`.
+
+### En el servidor
+
+```bash
+cd /mnt/c/portal-interno
+git pull
+git submodule update --init portal-sgi
+cp portal-sgi/.env.example portal-sgi/.env    # completar SMB_USUARIO, SMB_CLAVE y SMB_DOMINIO
+chmod 600 portal-sgi/.env
+docker compose up -d --build
+docker compose logs -f sgi-sync               # la primera sincronización arranca sola
+```
+
+Mientras corre la primera sincronización, `/sgi/` muestra "Estamos preparando el portal".
+
+### Actualizar el portal SGI
+
+Como las demás apps de portal-interno (ver su `FLUJO-GIT.md`):
+
+```bash
+git submodule update --remote portal-sgi
+docker compose up -d --build sgi-web sgi-sync
+git add portal-sgi && git commit -m "Actualizo portal-sgi a última versión" && git push
 ```
 
 ## Desarrollo local
@@ -195,6 +277,9 @@ Con una copia del disco en la PC (por defecto `C:/Temp/DocumentacionISO`, variab
 cp .env.example .env
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
+
+- Portal a través de un nginx que replica el de portal-interno: http://localhost:8096/sgi/
+- App directa, sin nginx: http://localhost:8095/
 
 Solo la app web, sin Docker: `PORTAL_DATOS` apunta a una carpeta con `current` (la copia del
 disco, o un enlace a ella) y opcionalmente `sync.json`.

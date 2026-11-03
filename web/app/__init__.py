@@ -1,6 +1,7 @@
 """Portal SGI: aplicación web que publica la información documentada del disco SGI."""
 from __future__ import annotations
 
+import logging
 import os
 import tomllib
 
@@ -17,6 +18,9 @@ AVISO_POR_DEFECTO = (
 
 
 def create_app(config: dict | None = None) -> Flask:
+    # Los mensajes de la app (regeneración del índice, errores de escaneo) van a la salida
+    # del contenedor: docker compose logs sgi-web
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     app = Flask(__name__)
     app.config.update(
         DATA_DIR=os.environ.get("PORTAL_DATOS", "/data"),
