@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}Información Documentada{% endblock %} · SGI Neostar</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+</head>
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+  <header class="cabecera">
+    <div class="contenedor cabecera-interior">
+      <a class="marca" href="{{ url_for('portal.home') }}" aria-label="Portal SGI, inicio">
+        {# Provisorio: se reemplaza por el avatar de SGI #}
+        <span class="marca-sgi" aria-hidden="true">SGI</span>
+        <img class="marca-neostar" src="{{ url_for('static', filename='img/neostar-logo.jpg') }}" alt="Neostar">
+        <span class="marca-divisor" aria-hidden="true"></span>
+        <span class="marca-lema"><span>Sistema de Gestión</span><span class="acento">Integrado</span></span>
+      </a>
+    </div>
+  </header>
+
+  <main id="contenido">
+    {% block contenido %}{% endblock %}
+  </main>
+
+  <footer class="contenedor pie">
+    <div class="pie-linea" aria-hidden="true">
+      <span class="pie-punto"></span><span class="pie-trazo"></span>
+      <img src="{{ url_for('static', filename='img/neostar-logo.jpg') }}" alt="Neostar">
+      <span class="pie-trazo pie-trazo-der"></span><span class="pie-punto"></span>
+    </div>
+    <p class="pie-texto">Sistema de Gestión Integrado · Calidad, Medio Ambiente, Seguridad y Salud en el Trabajo</p>
+  </footer>
+</body>
+</html>

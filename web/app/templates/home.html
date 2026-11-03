@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% from "_iconos.html" import icono, icono_norma, simbolo %}
+
+{% block contenido %}
+<section class="contenedor hero">
+  <div class="hero-texto">
+    <h1 class="hero-titulo">Información<br><span class="acento">Documentada</span></h1>
+
+    <p class="aviso">
+      {{ simbolo("escudo", "aviso-icono") }}
+      <span>{{ config.AVISO }}</span>
+    </p>
+
+    <ul class="pastillas" aria-label="Estado del portal">
+      <li class="pastilla">{{ simbolo("red") }} Disponible en la red interna</li>
+      <li class="pastilla">{{ simbolo("reloj") }} Última actualización: {{ estado.ultima_ok | fecha_larga }}</li>
+    </ul>
+  </div>
+
+  <div class="hero-avatar" aria-hidden="true">
+    <span class="puntos puntos-arriba"></span>
+    {# Provisorio: se reemplaza por el avatar de SGI #}
+    <svg class="avatar-provisorio" viewBox="0 0 240 240">
+      <circle cx="120" cy="120" r="104" class="ap-fondo"/>
+      <rect x="62" y="56" width="96" height="124" rx="12" class="ap-hoja-atras"/>
+      <rect x="82" y="44" width="96" height="124" rx="12" class="ap-hoja"/>
+      <path d="M102 82h56M102 100h56M102 118h40" class="ap-lineas"/>
+      <circle cx="168" cy="160" r="30" class="ap-sello"/>
+      <path d="M154 160l10 10 19-20" class="ap-check"/>
+    </svg>
+    <span class="puntos puntos-abajo"></span>
+  </div>
+</section>
+
+{% if accesos %}
+<section class="contenedor bloque" aria-labelledby="titulo-accesos">
+  <h2 class="titulo-bloque" id="titulo-accesos">Accesos rápidos</h2>
+  <div class="accesos">
+    {% for doc in accesos %}
+      <a class="tarjeta tarjeta-acceso" href="{{ url_for('portal.documento', ruta=doc.path) }}" target="_blank" rel="noopener">
+        {{ icono("mapa" if "mapa" in doc.key else "guia" if "guia" in doc.key else "documento") }}
+        <span class="tarjeta-info">
+          <span class="tarjeta-titulo">{{ doc.info.label }}</span>
+          <span class="tarjeta-meta">{{ doc.primary.ext | formato }} · {{ doc.primary.size | tamano }} · actualizado {{ doc.primary.mtime | fecha_corta }}</span>
+        </span>
+        <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if cert %}
+<section class="contenedor bloque" aria-labelledby="titulo-certificacion">
+  <h2 class="titulo-bloque" id="titulo-certificacion">Certificación vigente</h2>
+  <article class="certificacion">
+    <div class="cert-cuerpo">
+      {# El sello se muestra tal cual lo entrega el certificador: sin recortes, filtros ni sombras. #}
+      <a class="cert-sello" href="{{ url_for('static', filename=cert.sello ~ '-2400.png') }}" target="_blank" rel="noopener"
+         title="Ver el sello en tamaño completo">
+        <img src="{{ url_for('static', filename=cert.sello ~ '-1200.png') }}"
+             srcset="{{ url_for('static', filename=cert.sello ~ '-1200.png') }} 1200w, {{ url_for('static', filename=cert.sello ~ '-2400.png') }} 2400w"
+             sizes="(max-width: 600px) 90vw, 420px" width="1200" height="443"
+             alt="Sello {{ cert.certificador }}: Sistema de Gestión certificado {% for n in cert.normas %}{{ n.norma }}{{ ', ' if not loop.last }}{% endfor %}. ID {{ cert.id }}.">
+      </a>
+      <div class="cert-detalle">
+        <p class="cert-titulo">Sistema de Gestión Integrado certificado</p>
+        <ul class="normas">
+          {% for n in cert.normas %}
+            <li class="norma">
+              {{ icono_norma(n.icono) }}
+              <span><strong class="norma-codigo norma-{{ n.icono }}">{{ n.norma }}</strong><span class="norma-nombre">{{ n.nombre }}</span></span>
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="cert-pie">
+          <span>Certificado por {{ cert.certificador }} · ID {{ cert.id }}</span>
+          <a href="{{ cert.verificar_url }}" target="_blank" rel="noopener">Verificar en Certipedia {{ simbolo("externo") }}</a>
+        </p>
+      </div>
+    </div>
+  </article>
+</section>
+{% endif %}
+
+<section class="contenedor secciones" aria-labelledby="titulo-secciones">
+  <div class="secciones-encabezado">
+    <h2 class="titulo-seccion" id="titulo-secciones">Documentación</h2>
+    <p class="subtitulo">Seleccioná una categoría para acceder a la información.</p>
+  </div>
+  <div class="grilla">
+    {% for v in secciones %}
+      <a class="tarjeta" href="{{ url_for('portal.seccion', ruta=v.seccion.path) }}">
+        <span class="tarjeta-arriba">
+          {{ icono(v.icono) }}
+          <span class="tarjeta-info">
+            <span class="tarjeta-etiqueta">Sección{% if v.seccion.info.order is not none %} {{ '%02d' % v.seccion.info.order }}{% endif %}</span>
+            <span class="tarjeta-titulo">{{ v.titulo }}</span>
+            {% if v.descripcion %}<span class="tarjeta-desc">{{ v.descripcion }}</span>{% endif %}
+          </span>
+        </span>
+        <span class="tarjeta-pie">
+          <span>Ingresar <small>· {{ v.seccion.document_count }} documentos</small></span>
+          <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>
+        </span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if otros %}
+<section class="contenedor otros" aria-labelledby="titulo-otros">
+  <h2 class="titulo-bloque" id="titulo-otros">Otros documentos</h2>
+  <div class="lista">
+    {% for doc in otros %}
+      <a class="fila" href="{{ url_for('portal.documento', ruta=doc.path) }}" target="_blank" rel="noopener">
+        {{ icono("documento", "icono-chico") }}
+        <span class="fila-titulo">{{ doc.info.label }}</span>
+        <span class="fila-meta">{{ doc.primary.ext | formato }} · {{ doc.primary.mtime | fecha_corta }}</span>
+        <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

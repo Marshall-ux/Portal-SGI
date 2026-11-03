@@ -1,0 +1,51 @@
+{# Íconos SVG del portal. Uso: {% from "_iconos.html" import icono, icono_norma, simbolo %} #}
+
+{# Baldosa de 64×64 para tarjetas: fondo en tinte SGI, trazo en el color del texto (currentColor). #}
+{% set BALDOSAS = {
+  "manuales": '<path d="M18 23v21a5 5 0 0 0 5 5h15"/><path d="M26 15h12l8 8v19a3 3 0 0 1-3 3H26a3 3 0 0 1-3-3V18a3 3 0 0 1 3-3z"/><path d="M38 15v8h8"/><path class="ic-suave" d="M29 30h11M29 36h11"/>',
+  "puestos": '<circle cx="25" cy="24" r="6"/><path d="M14 46c1.2-6.6 5.5-10 11-10s9.8 3.4 11 10"/><path class="ic-suave" d="M41 21l2.5 2.5L48 19M41 31l2.5 2.5L48 29M41 41l2.5 2.5L48 39"/>',
+  "capacitaciones": '<rect x="14" y="16" width="36" height="24" rx="3"/><path d="M32 40v6M25 48h14"/><circle class="ic-suave" cx="32" cy="25" r="3.5"/><path class="ic-suave" d="M25.5 35c1.2-3 3.6-4.5 6.5-4.5s5.3 1.5 6.5 4.5"/>',
+  "controles": '<rect x="19" y="17" width="26" height="32" rx="3"/><rect x="26" y="13" width="12" height="7" rx="2"/><path d="M25.5 34l5 5 9-10"/>',
+  "cronogramas": '<rect x="15" y="18" width="34" height="30" rx="3"/><path d="M15 27h34M24 14v8M40 14v8"/><path class="ic-suave" d="M22 34h4M30 34h4M38 34h4M22 41h4M30 41h4"/>',
+  "buzones": '<path d="M19 17h26a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H31l-8 7v-7h-4a4 4 0 0 1-4-4V21a4 4 0 0 1 4-4z"/><path class="ic-suave" d="M23 26h18M23 32h11"/>',
+  "encuestas": '<path d="M16 47h32"/><rect class="ic-suave" x="19" y="33" width="7" height="14" rx="2"/><rect class="ic-suave" x="28.5" y="25" width="7" height="22" rx="2"/><rect x="38" y="17" width="7" height="30" rx="2"/>',
+  "carpeta": '<path d="M15 23a4 4 0 0 1 4-4h8l4 4h14a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H19a4 4 0 0 1-4-4z"/><path class="ic-suave" d="M15 29h34"/>',
+  "guia": '<path d="M15 21l11-5 12 5 11-5v27l-11 5-12-5-11 5z"/><path class="ic-suave" d="M26 16v27M38 21v27"/>',
+  "mapa": '<rect x="13" y="27" width="11" height="10" rx="2"/><rect x="40" y="16" width="11" height="10" rx="2"/><rect x="40" y="38" width="11" height="10" rx="2"/><path class="ic-suave" d="M24 32h8V21h8M32 32v11h8"/>',
+  "documento": '<path d="M24 15h14l8 8v22a3 3 0 0 1-3 3H24a3 3 0 0 1-3-3V18a3 3 0 0 1 3-3z"/><path d="M38 15v8h8"/><path class="ic-suave" d="M27 31h13M27 37h13M27 43h8"/>',
+} %}
+
+{% macro icono(nombre, clase="") -%}
+<svg class="icono {{ clase }}" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+  <rect class="ic-fondo" x="2" y="2" width="60" height="60" rx="14"/>
+  <g class="ic-trazo">{{ (BALDOSAS[nombre] if nombre in BALDOSAS else BALDOSAS["carpeta"]) | safe }}</g>
+</svg>
+{%- endmacro %}
+
+{# Normas: dibujo blanco sobre círculo del color de la norma (banda gráfica SGI). #}
+{% set NORMAS = {
+  "calidad": '<circle cx="24" cy="20" r="7.5"/><path d="M24 16.2l1.2 2.5 2.7.4-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.4z"/><path d="M19.5 26.5L17 36l4.2-1.6L24 38l2.8-3.6L31 36l-2.5-9.5"/>',
+  "ambiente": '<path d="M14 34c0-11 7.5-18.5 21-19-.6 13.5-8 20.5-19 20.5"/><path d="M14 35c4.5-6 9-9.5 14-12"/>',
+  "seguridad": '<path d="M13 31.5h22v3.5H13z"/><path d="M15.5 31.5V29a8.5 8.5 0 0 1 17 0v2.5"/><path d="M22 21v6M26 21v6"/>',
+} %}
+
+{% macro icono_norma(nombre) -%}
+<svg class="icono-norma norma-{{ nombre }}" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+  <circle class="in-fondo" cx="24" cy="24" r="24"/>
+  <g class="in-trazo">{{ NORMAS[nombre] | safe }}</g>
+</svg>
+{%- endmacro %}
+
+{# Símbolos chicos de interfaz (24×24, trazo). #}
+{% set SIMBOLOS = {
+  "flecha": '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  "externo": '<path d="M14 5h5v5M19 5l-8 8M17 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4"/>',
+  "red": '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/>',
+  "reloj": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  "escudo": '<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+  "aviso": '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/>',
+} %}
+
+{% macro simbolo(nombre, clase="") -%}
+<svg class="simbolo {{ clase }}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">{{ SIMBOLOS[nombre] | safe }}</svg>
+{%- endmacro %}
