@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_iconos.html" import icono, simbolo %}
+{% from "_tarjetas.html" import tarjeta_seccion, tarjeta_documento, ruta_navegacion with context %}
+{% set v = vista(seccion) %}
+{% block titulo %}{{ v.titulo }}{% endblock %}
+
+{% block contenido %}
+<section class="contenedor encabezado-seccion">
+  {{ ruta_navegacion(seccion) }}
+  <div class="encabezado-fila">
+    {{ icono(v.icono, "icono-grande") }}
+    <div class="encabezado-texto">
+      <h1 class="titulo-seccion">{{ v.titulo }}</h1>
+      {% if v.descripcion %}<p class="subtitulo">{{ v.descripcion }}</p>{% endif %}
+      <p class="encabezado-meta">
+        {{ seccion.document_count }} {{ "documento" if seccion.document_count == 1 else "documentos" }}
+        {%- if seccion.sections %} · {{ seccion.sections | length }} {{ "carpeta" if seccion.sections | length == 1 else "carpetas" }}{% endif %}
+      </p>
+    </div>
+    <form class="buscador buscador-seccion" action="{{ url_for('portal.buscar') }}" role="search">
+      <input type="hidden" name="en" value="{{ seccion.path }}">
+      <label class="oculto" for="buscar-seccion">Buscar en {{ v.titulo }}</label>
+      <input id="buscar-seccion" type="search" name="q" placeholder="Buscar en esta sección" autocomplete="off">
+      <button type="submit" aria-label="Buscar">{{ simbolo("buscar") }}</button>
+    </form>
+  </div>
+</section>
+
+{% if seccion.sections %}
+<section class="contenedor bloque" aria-labelledby="titulo-carpetas">
+  <h2 class="titulo-bloque" id="titulo-carpetas">Carpetas</h2>
+  <div class="grilla">
+    {% for s in seccion.sections %}{{ tarjeta_seccion(s) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if seccion.documents %}
+<section class="contenedor bloque" aria-labelledby="titulo-documentos">
+  <h2 class="titulo-bloque" id="titulo-documentos">Documentos</h2>
+  <div class="grilla">
+    {% for doc in seccion.documents %}{{ tarjeta_documento(doc) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_iconos.html" import simbolo %}
+{% from "_tarjetas.html" import tarjeta_seccion, tarjeta_documento with context %}
+{% block titulo %}{{ "Buscar: " ~ resultados.consulta if resultados.consulta else "Buscar" }}{% endblock %}
+
+{% block contenido %}
+<section class="contenedor encabezado-seccion">
+  <nav class="migas" aria-label="Ruta de navegación">
+    <ol><li><a href="{{ url_for('portal.home') }}">{{ simbolo("inicio") }}<span>Inicio</span></a></li>
+        <li>{{ simbolo("separador", "migas-sep") }}<span aria-current="page">Buscar</span></li></ol>
+  </nav>
+
+  {% if not resultados.consulta %}
+    <h1 class="titulo-seccion">Buscar documentos</h1>
+    <p class="subtitulo">Escribí un nombre, un código (por ejemplo «F 7.2-01») o una palabra en el buscador de arriba.</p>
+  {% else %}
+    <h1 class="titulo-seccion">Resultados para «{{ resultados.consulta }}»</h1>
+    <p class="subtitulo" role="status">
+      {{ resultados.total_documentos }} {{ "documento" if resultados.total_documentos == 1 else "documentos" }}
+      {%- if resultados.secciones %} y {{ resultados.secciones | length }} {{ "carpeta" if resultados.secciones | length == 1 else "carpetas" }}{% endif %}
+      {%- if dentro %} en <strong>{{ vista(dentro).titulo }}</strong> ·
+        <a href="{{ url_for('portal.buscar', q=resultados.consulta) }}">buscar en todo el portal</a>{% endif %}
+    </p>
+  {% endif %}
+</section>
+
+{% if resultados.secciones %}
+<section class="contenedor bloque" aria-labelledby="titulo-carpetas">
+  <h2 class="titulo-bloque" id="titulo-carpetas">Carpetas</h2>
+  <div class="grilla">
+    {% for s in resultados.secciones %}{{ tarjeta_seccion(s) }}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if resultados.documentos %}
+<section class="contenedor bloque" aria-labelledby="titulo-documentos">
+  <h2 class="titulo-bloque" id="titulo-documentos">Documentos</h2>
+  <div class="grilla">
+    {% for doc in resultados.documentos %}{{ tarjeta_documento(doc, mostrar_ruta=True) }}{% endfor %}
+  </div>
+  {% if resultados.total_documentos > resultados.documentos | length %}
+    <p class="subtitulo nota-limite">Se muestran los primeros {{ resultados.documentos | length }}. Agregá otra palabra para afinar la búsqueda.</p>
+  {% endif %}
+</section>
+{% elif resultados.consulta and not resultados.secciones %}
+<section class="contenedor mensaje-vacio">
+  <p>No encontramos documentos con esas palabras. Probá con menos palabras o con el código del documento.</p>
+</section>
+{% endif %}
+{% endblock %}

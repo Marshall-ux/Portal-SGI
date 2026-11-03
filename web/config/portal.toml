@@ -1,0 +1,65 @@
+# Presentación del portal. Lo que no está acá sale del disco I.
+#
+# Las secciones se identifican por el slug del nombre de su carpeta, sin el número
+# de orden: "01. MANUALES  Y DOCUMENTACIÓN NEOSTAR" → manuales-y-documentacion-neostar.
+# Una carpeta que no figura acá aparece igual, con su nombre y un ícono genérico.
+# Íconos disponibles: manuales, puestos, capacitaciones, controles, cronogramas,
+# buzones, encuestas, carpeta.
+
+[secciones.manuales-y-documentacion-neostar]
+titulo = "Manuales y Documentación"
+descripcion = "Manual Integrado, procedimientos, instructivos y formularios."
+icono = "manuales"
+
+[secciones.puestos-de-trabajo-y-documentacion-asociada]
+titulo = "Puestos de Trabajo y Documentación Asociada"
+descripcion = "Perfiles, riesgos, planes de emergencia, aspectos e impactos ambientales."
+icono = "puestos"
+
+[secciones.capacitaciones-neostar]
+titulo = "Capacitaciones"
+descripcion = "Calidad, medio ambiente, seguridad y salud en el trabajo, SGI."
+icono = "capacitaciones"
+
+[secciones.controles-operativos-neostar]
+titulo = "Controles Operativos"
+descripcion = "Auditorías internas de ventas, posventa y administración."
+icono = "controles"
+
+[secciones.cronogramas]
+titulo = "Cronogramas"
+descripcion = "Programas anuales de capacitación, auditorías y más."
+icono = "cronogramas"
+
+[secciones.buzones-de-participacion-y-consulta]
+titulo = "Buzones de Participación y Consulta"
+descripcion = "No conformidades, oportunidades de mejora y sugerencias."
+icono = "buzones"
+
+[secciones.encuestas]
+titulo = "Encuestas"
+descripcion = "Análisis de encuestas de clientes y posventa."
+icono = "encuestas"
+
+# Certificación vigente. Al renovarla: regenerar el sello con tools/render_sello.py
+# y actualizar estos datos.
+[certificacion]
+certificador = "TÜV Rheinland"
+id = "9000015845"
+sello = "img/certificacion/tuv-rheinland-9000015845"  # sin "-1200.png" / "-2400.png"
+verificar_url = "http://m.certipedia.com/?id=9000015845"  # la misma dirección que el QR del sello
+
+[[certificacion.normas]]
+norma = "ISO 9001:2015"
+nombre = "Calidad"
+icono = "calidad"
+
+[[certificacion.normas]]
+norma = "ISO 14001:2015"
+nombre = "Medio Ambiente"
+icono = "ambiente"
+
+[[certificacion.normas]]
+norma = "ISO 45001:2018"
+nombre = "Seguridad y Salud en el Trabajo"
+icono = "seguridad"

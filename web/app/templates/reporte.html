@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_iconos.html" import simbolo %}
+{% block titulo %}Reporte del disco{% endblock %}
+
+{% block contenido %}
+<section class="contenedor encabezado-seccion">
+  <nav class="migas" aria-label="Ruta de navegación">
+    <ol><li><a href="{{ url_for('portal.home') }}">{{ simbolo("inicio") }}<span>Inicio</span></a></li>
+        <li>{{ simbolo("separador", "migas-sep") }}<span aria-current="page">Reporte del disco</span></li></ol>
+  </nav>
+  <div class="encabezado-fila">
+    <div class="encabezado-texto">
+      <h1 class="titulo-seccion">Reporte del disco SGI</h1>
+      <p class="subtitulo">Qué revisar en el disco I para que el portal quede ordenado. Se actualiza con cada sincronización.</p>
+    </div>
+    <a class="boton boton-secundario" href="{{ url_for('portal.reporte_csv') }}">{{ simbolo("descarga") }} Descargar para Excel</a>
+  </div>
+</section>
+
+<section class="contenedor bloque" aria-labelledby="titulo-sincronizacion">
+  <h2 class="titulo-bloque" id="titulo-sincronizacion">Sincronización</h2>
+  <div class="estado-sync {{ 'estado-error' if estado.fallo_el_ultimo_intento else 'estado-ok' }}">
+    <span class="estado-marca">{{ "Falló el último intento" if estado.fallo_el_ultimo_intento else "Al día" }}</span>
+    <dl class="estado-datos">
+      <div><dt>Última sincronización correcta</dt><dd>{{ estado.ultima_ok | fecha_larga }}</dd></div>
+      <div><dt>Último intento</dt><dd>{{ estado.ultimo_intento | fecha_larga }}</dd></div>
+      <div><dt>Copia publicada</dt><dd>{{ estado.snapshot or "—" }}{% if estado.archivos %} · {{ estado.archivos }} archivos{% endif %}</dd></div>
+    </dl>
+    {% if estado.fallo_el_ultimo_intento %}
+      <p class="estado-error-texto">{{ simbolo("aviso") }} {{ estado.ultimo_error }} El portal sigue mostrando la última copia correcta.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="contenedor bloque" aria-label="Resumen">
+  <div class="resumen">
+    <div class="dato"><span class="dato-valor">{{ index.documents | length }}</span><span class="dato-texto">documentos publicados</span></div>
+    <div class="dato"><span class="dato-valor">{{ index.root.walk() | list | length - 1 }}</span><span class="dato-texto">carpetas publicadas</span></div>
+    <div class="dato {{ 'dato-alerta' if a_corregir }}"><span class="dato-valor">{{ a_corregir }}</span><span class="dato-texto">avisos para revisar</span></div>
+    <div class="dato"><span class="dato-valor">{{ index.excluded | length }}</span><span class="dato-texto">archivos no publicados</span></div>
+  </div>
+</section>
+
+<section class="contenedor bloque" aria-labelledby="titulo-avisos">
+  <h2 class="titulo-bloque" id="titulo-avisos">Para revisar</h2>
+  {% if not a_corregir %}
+    <p class="aviso">{{ simbolo("escudo", "aviso-icono") }}<span>Todo en orden: no hay avisos para revisar.</span></p>
+  {% endif %}
+  <div class="grupos">
+    {% for g in grupos %}
+      <details class="grupo" {{ "open" if g.tipo.abierto }}>
+        <summary>
+          <span class="grupo-titulo">{{ g.tipo.titulo }}</span>
+          <span class="grupo-cantidad">{{ g.avisos | length }}</span>
+        </summary>
+        <p class="grupo-que-hacer"><strong>Qué hacer:</strong> {{ g.tipo.que_hacer }}</p>
+        <ul class="avisos-lista">
+          {% for a in g.avisos %}
+            {% set s = index.section_of(a.relpath) %}
+            <li>
+              <code class="ruta-disco">{{ ruta_disco(a.relpath) }}</code>
+              {% if a.detail %}<span class="aviso-detalle">{{ a.detail }}</span>{% endif %}
+              {% if s and g.tipo.clave != "excluido" %}
+                <a class="aviso-enlace" href="{{ url_for('portal.home') if not s.path else url_for('portal.seccion', ruta=s.path) }}">Ver carpeta en el portal</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
