@@ -41,9 +41,10 @@ TIPOS = (
     TipoAviso("revision_no_estandar", "Revisión escrita distinto de «_Rev.NN»",
               "El portal las reconoce igual. Al publicar la próxima revisión, usar el formato «_Rev.NN» "
               "sin espacios ni datos agregados.", abierto=False),
-    TipoAviso("excluido", "Archivos técnicos o temporales no publicados",
-              "Nada: el portal los oculta (Thumbs.db, temporales de Office, configuración del servidor). "
-              "Si alguno debería publicarse, avisar a I+D para ajustar las exclusiones.", abierto=False),
+    TipoAviso("excluido", "Archivos que el portal no publica",
+              "Nada: el portal los oculta a propósito (Thumbs.db, temporales de Office, configuración del "
+              "servidor y la Guía de Acceso del sitio anterior). Si alguno debería publicarse, avisar a I+D "
+              "para ajustar las exclusiones.", abierto=False),
 )
 
 INFORMATIVOS = {"excluido"}  # no cuentan como avisos para corregir

@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from .indexer import Document, Section
+from .indexer import Document, Index, Section
 
 # Palabras que van en minúscula dentro de un título (salvo al principio)
 _MINUSCULAS = {"a", "al", "con", "de", "del", "e", "el", "en", "la", "las", "los", "o", "para",
@@ -75,6 +75,32 @@ def vista_seccion(section: Section, config: dict) -> SeccionVista:
 def migas(section: Section, config: dict) -> list[SeccionVista]:
     """Ruta de navegación desde la sección principal hasta esta."""
     return [vista_seccion(s, config) for s in section.breadcrumb]
+
+
+@dataclass(frozen=True)
+class AccesoVista:
+    """Un acceso rápido de la home, con el documento al que apunta (None si ya no está)."""
+
+    ruta: str  # dirección configurada en portal.toml
+    documento: Document | None
+    titulo: str
+    icono: str
+
+
+def accesos_rapidos(index: Index, config: dict) -> list[AccesoVista]:
+    """Accesos rápidos de config/portal.toml, en su orden. Si el documento se movió de carpeta
+    y su nombre es único, se lo sigue encontrando."""
+    accesos = []
+    for cfg in config.get("accesos", []):
+        ruta = cfg["documento"].strip("/")
+        doc = index.document(ruta) or index.moved_document(ruta)
+        accesos.append(AccesoVista(
+            ruta=ruta,
+            documento=doc,
+            titulo=cfg.get("titulo") or (doc.info.label if doc else ruta),
+            icono=cfg.get("icono", "documento"),
+        ))
+    return accesos
 
 
 _ICONO_FORMATO = {

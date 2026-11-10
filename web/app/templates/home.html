@@ -31,11 +31,12 @@
 <section class="contenedor bloque" aria-labelledby="titulo-accesos">
   <h2 class="titulo-bloque" id="titulo-accesos">Accesos rápidos</h2>
   <div class="accesos">
-    {% for doc in accesos %}
+    {% for acceso in accesos %}
+      {% set doc = acceso.documento %}
       <a class="tarjeta tarjeta-acceso" href="{{ url_for('portal.documento', ruta=doc.path) }}" target="_blank" rel="noopener">
-        {{ icono("mapa" if "mapa" in doc.key else "guia" if "guia" in doc.key else "documento") }}
+        {{ icono(acceso.icono) }}
         <span class="tarjeta-info">
-          <span class="tarjeta-titulo">{{ doc.info.label }}</span>
+          <span class="tarjeta-titulo">{{ acceso.titulo }}</span>
           <span class="tarjeta-meta">{{ doc.primary.ext | formato }} · {{ doc.primary.size | tamano }} · actualizado {{ doc.primary.mtime | fecha_corta }}</span>
         </span>
         <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>

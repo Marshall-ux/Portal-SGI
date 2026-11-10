@@ -1,5 +1,25 @@
 # Presentación del portal. Lo que no está acá sale del disco I.
-#
+
+# Archivos del disco que el portal no publica, además de los técnicos de PORTAL_EXCLUSIONES
+# (mismo formato: nombre del archivo, con comodines, sin distinguir mayúsculas).
+# La Guía de Acceso queda afuera porque las tarjetas de Documentación de la home ya llevan a
+# cada carpeta y sus enlaces apuntan al sitio anterior (http://192.168.41.5), que se da de baja.
+no_publicar = ["00. Gu*a de Acceso*"]
+
+# Accesos rápidos de la home, en este orden. "documento" es la dirección del documento en el
+# portal (lo que sigue a /d/ al abrirlo), que no incluye la revisión: cuando SGI sube una
+# revisión nueva, el acceso abre la nueva sin tocar nada. Si el documento cambia de nombre,
+# hay que actualizar la dirección acá; mientras tanto, el reporte del disco lo avisa.
+# "titulo" es opcional (si falta, se usa el nombre del archivo). Íconos: mapa, politica, documento.
+[[accesos]]
+documento = "mapa-de-proceso"
+icono = "mapa"
+
+[[accesos]]
+documento = "manuales-y-documentacion-neostar/manual-integrado/2-0-politica-de-calidad-medio-ambiente-seguridad-y-salud-en-el-trabajo"
+titulo = "Política del Sistema de Gestión Integrado"
+icono = "politica"
+
 # Las secciones se identifican por el slug del nombre de su carpeta, sin el número
 # de orden: "01. MANUALES  Y DOCUMENTACIÓN NEOSTAR" → manuales-y-documentacion-neostar.
 # Una carpeta que no figura acá aparece igual, con su nombre y un ícono genérico.

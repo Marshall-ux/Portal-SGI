@@ -10,7 +10,7 @@ from . import reporte as rep
 from .indexer import Document, Index, Section
 from .search import buscar as buscar_en
 from .store import IndexStore
-from .vistas import icono_documento, migas, vista_seccion
+from .vistas import accesos_rapidos, icono_documento, migas, vista_seccion
 
 bp = Blueprint("portal", __name__)
 
@@ -44,13 +44,14 @@ def ayudantes():
 @bp.get("/")
 def home():
     index = _index_o_preparando()
-    raiz = index.root.documents
+    accesos = [a for a in accesos_rapidos(index, current_app.config["PORTAL"]) if a.documento]
+    en_accesos = {id(a.documento) for a in accesos}
     return render_template(
         "home.html",
         estado=_store().status(),
-        # Los documentos "00." de la raíz son los accesos rápidos (Guía de Acceso, Mapa de Proceso)
-        accesos=[d for d in raiz if d.info.order == 0],
-        otros=[d for d in raiz if d.info.order != 0],
+        accesos=accesos,
+        # Los archivos de la raíz del disco que no son accesos rápidos
+        otros=[d for d in index.root.documents if id(d) not in en_accesos],
         secciones=index.root.sections,
         cert=current_app.config["PORTAL"].get("certificacion"),
     )
@@ -79,11 +80,10 @@ def documento(ruta: str):
     doc: Document | None = index.document(ruta)
     if doc is None:
         # Link viejo: si el documento cambió de carpeta y su nombre es único, se redirige
-        slug = ruta.strip("/").rsplit("/", 1)[-1]
-        candidatos = [d for d in index.documents if d.slug == slug]
-        if len(candidatos) == 1:
-            return redirect(url_for("portal.documento", ruta=candidatos[0].path, **request.args))
-        abort(404)
+        movido = index.moved_document(ruta)
+        if movido is None:
+            abort(404)
+        return redirect(url_for("portal.documento", ruta=movido.path, **request.args))
     formato = request.args.get("formato")
     version = doc.formats.get(formato.lower()) if formato else doc.primary
     if version is None:
@@ -102,12 +102,15 @@ def reporte():
     """Qué revisar en el disco para que el portal quede ordenado (para el equipo de SGI)."""
     index = _index_o_preparando()
     grupos = rep.agrupar(index)
+    # Accesos rápidos de portal.toml cuyo documento ya no se encuentra (se renombró o se borró)
+    accesos_faltantes = [a for a in accesos_rapidos(index, current_app.config["PORTAL"]) if a.documento is None]
     return render_template(
         "reporte.html",
         index=index,
         estado=_store().status(),
         grupos=grupos,
-        a_corregir=rep.a_corregir(grupos),
+        accesos_faltantes=accesos_faltantes,
+        a_corregir=rep.a_corregir(grupos) + len(accesos_faltantes),
         ruta_disco=lambda relpath: rep.ruta_disco(relpath, current_app.config["RUTA_DISCO"]),
     )
 
