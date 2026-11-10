@@ -37,7 +37,9 @@ def create_app(config: dict | None = None) -> Flask:
 
     with open(app.config["CONFIG_FILE"], "rb") as f:
         app.config["PORTAL"] = tomllib.load(f)
-    app.extensions["store"] = IndexStore(app.config["DATA_DIR"], Exclusions.parse(app.config["EXCLUSIONES"]))
+    # Los técnicos (.env, compartidos con la sincronización) y los que SGI decide no publicar (portal.toml)
+    exclusiones = Exclusions.parse(app.config["EXCLUSIONES"]).patterns + app.config["PORTAL"].get("no_publicar", [])
+    app.extensions["store"] = IndexStore(app.config["DATA_DIR"], Exclusions(exclusiones))
 
     # Detrás del nginx de portal-interno, en /sgi/: X-Forwarded-Prefix hace que
     # url_for arme las rutas con el prefijo.

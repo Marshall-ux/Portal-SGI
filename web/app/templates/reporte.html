@@ -47,6 +47,25 @@
     <p class="aviso">{{ simbolo("escudo", "aviso-icono") }}<span>Todo en orden: no hay avisos para revisar.</span></p>
   {% endif %}
   <div class="grupos">
+    {% if accesos_faltantes %}
+      <details class="grupo" open>
+        <summary>
+          <span class="grupo-titulo">Accesos rápidos sin documento</span>
+          <span class="grupo-cantidad">{{ accesos_faltantes | length }}</span>
+        </summary>
+        <p class="grupo-que-hacer"><strong>Qué hacer:</strong> el documento se renombró o se borró del disco, y
+          no aparece en los accesos rápidos de la página de inicio. Si se renombró, avisar a I+D el nombre nuevo
+          para actualizar el acceso.</p>
+        <ul class="avisos-lista">
+          {% for a in accesos_faltantes %}
+            <li>
+              <code class="ruta-disco">{{ a.titulo }}</code>
+              <span class="aviso-detalle">Dirección configurada: /d/{{ a.ruta }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
     {% for g in grupos %}
       <details class="grupo" {{ "open" if g.tipo.abierto }}>
         <summary>

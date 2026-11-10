@@ -60,10 +60,14 @@ repetida (`.pdf.pdf`), versiones viejas en la misma carpeta y carpetas vacías.
 |---|---|
 | Aclaración debajo del título | Variable `PORTAL_AVISO` del `.env` |
 | Última actualización | Fecha y hora de la última sincronización correcta (`sync.json`) |
-| Accesos rápidos | Documentos de la raíz del disco cuyo nombre empieza con `00.` (hoy: Guía de Acceso y Mapa de Proceso). Para sumar otro, SGI lo copia a la raíz como `00. Nombre.pdf`. |
+| Accesos rápidos | Lista `[[accesos]]` de `web/config/portal.toml` (hoy: Mapa de Proceso y Política del Sistema de Gestión Integrado). Cada acceso apunta al documento donde está en el disco, sin copiarlo, y abre siempre la revisión vigente. Si el documento se renombra o se borra, el acceso deja de mostrarse y el reporte del disco lo avisa. |
 | Certificación vigente | Sello e información de `web/config/portal.toml` |
 | Documentación | Una tarjeta por carpeta principal del disco. Título, descripción e ícono en `web/config/portal.toml`; una carpeta nueva aparece igual, con su nombre y un ícono genérico. |
 | Otros documentos | El resto de los archivos de la raíz del disco |
+
+La Guía de Acceso (`00. Guia de Acceso Documentación SGI.pdf`) no se publica (`no_publicar` en
+`web/config/portal.toml`): las tarjetas de Documentación ya llevan a cada carpeta y sus enlaces
+apuntan al sitio anterior, que se da de baja.
 
 ## Navegación
 
@@ -137,7 +141,7 @@ portal-sgi/
 │   └── preparar_avatar.py  # Avatar original de SGI → imágenes del hero
 ├── web/                    # App Flask + gunicorn (páginas, índice en memoria, entrega de archivos)
 │   ├── Dockerfile
-│   ├── config/portal.toml  # Presentación: secciones (títulos, descripciones, íconos) y certificación
+│   ├── config/portal.toml  # Presentación: accesos rápidos, secciones (títulos, descripciones, íconos) y certificación
 │   ├── app/
 │   │   ├── versions.py     # Nombres de archivo, identidad y versión vigente (módulo aislado)
 │   │   ├── indexer.py      # Escaneo del disco → árbol de secciones y documentos

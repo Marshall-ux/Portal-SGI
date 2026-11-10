@@ -14,6 +14,9 @@ DISCO = {
     "01. MANUALES  Y DOCUMENTACIÓN NEOSTAR": {
         "F 8.4-01 - Autorización Generica_Rev.07.pdf": 100,
         "F 8.4-01 - Autorización Generica_Rev.07.xls": 300,
+        "01. MANUAL INTEGRADO": {
+            "2.0 Politica de Calidad Medio Ambiente, Seguridad y Salud en el Trabajo_Rev.04.pdf": 50,
+        },
     },
     "08. CARPETA NUEVA DE SGI": {"informe.pdf": 1},
 }
@@ -56,14 +59,56 @@ def test_aclaracion_configurable(data_dir):
     assert "Texto de prueba de SGI." in html(app.test_client().get("/"))
 
 
-def test_home_accesos_rapidos_son_los_documentos_00(client):
-    page = html(client.get("/"))
-    accesos = page.split('id="titulo-accesos"')[1].split("</section>")[0]
-    assert 'href="/d/guia-de-acceso-documentacion-sgi"' in accesos
-    assert 'href="/d/mapa-de-proceso"' in accesos
+POLITICA = "manuales-y-documentacion-neostar/manual-integrado/2-0-politica-de-calidad-medio-ambiente-seguridad-y-salud-en-el-trabajo"
+
+
+def bloque(page, id_titulo):
+    return page.split(f'id="{id_titulo}"')[1].split("</section>")[0]
+
+
+def test_home_accesos_rapidos_desde_la_configuracion(client):
+    accesos = bloque(html(client.get("/")), "titulo-accesos")
+    # En el orden de portal.toml, con el título configurado o el nombre del archivo
+    assert accesos.index('href="/d/mapa-de-proceso"') < accesos.index(f'href="/d/{POLITICA}"')
+    assert "Mapa de Proceso" in accesos
+    assert "Política del Sistema de Gestión Integrado" in accesos
     assert "ACUERDO" not in accesos
-    otros = page.split('id="titulo-otros"')[1]
+
+
+def test_home_otros_documentos_sin_los_accesos(client):
+    otros = bloque(html(client.get("/")), "titulo-otros")
     assert 'href="/d/acuerdo-con-suscriptor"' in otros
+    assert "mapa-de-proceso" not in otros
+
+
+def test_guia_de_acceso_no_se_publica(client):
+    page = html(client.get("/"))
+    assert "guia-de-acceso" not in page and "Guia de Acceso" not in page
+    assert client.get("/d/guia-de-acceso-documentacion-sgi").status_code == 404
+    assert "No encontramos documentos" in html(client.get("/buscar?q=guia acceso"))
+    # Figura en el reporte entre los archivos que no se publican
+    assert "00. Guia de Acceso Documentación SGI.pdf" in html(client.get("/reporte"))
+
+
+def test_acceso_rapido_sigue_al_documento_movido(data_dir):
+    manuales = data_dir / "current" / "01. MANUALES  Y DOCUMENTACIÓN NEOSTAR"
+    os.rename(manuales / "01. MANUAL INTEGRADO", manuales / "01. MANUAL DEL SGI")
+    accesos = bloque(html(create_app({"DATA_DIR": str(data_dir)}).test_client().get("/")), "titulo-accesos")
+    assert 'href="/d/manuales-y-documentacion-neostar/manual-del-sgi/2-0-politica-de-calidad' in accesos
+
+
+def test_acceso_rapido_sin_documento_se_avisa_en_el_reporte(data_dir):
+    integrado = data_dir / "current" / "01. MANUALES  Y DOCUMENTACIÓN NEOSTAR" / "01. MANUAL INTEGRADO"
+    os.rename(integrado / "2.0 Politica de Calidad Medio Ambiente, Seguridad y Salud en el Trabajo_Rev.04.pdf",
+              integrado / "2.0 Politica del SGI_Rev.05.pdf")
+    client = create_app({"DATA_DIR": str(data_dir)}).test_client()
+    page = html(client.get("/"))
+    assert "Política del Sistema de Gestión Integrado" not in page
+    assert 'href="/d/mapa-de-proceso"' in page  # los demás accesos siguen
+    reporte = html(client.get("/reporte"))
+    assert "Accesos rápidos sin documento" in reporte
+    assert f"/d/{POLITICA}" in reporte
+    assert "Todo en orden" not in reporte
 
 
 def test_home_certificacion(client):
