@@ -10,7 +10,7 @@ no_publicar = ["00. Gu*a de Acceso*"]
 # portal (lo que sigue a /d/ al abrirlo), que no incluye la revisión: cuando SGI sube una
 # revisión nueva, el acceso abre la nueva sin tocar nada. Si el documento cambia de nombre,
 # hay que actualizar la dirección acá; mientras tanto, el reporte del disco lo avisa.
-# "titulo" es opcional (si falta, se usa el nombre del archivo). Íconos: mapa, politica, documento.
+# "titulo" es opcional (si falta, se usa el nombre del archivo). Íconos: mapa, politica, organigrama, documento.
 [[accesos]]
 documento = "mapa-de-proceso"
 icono = "mapa"
@@ -20,11 +20,22 @@ documento = "manuales-y-documentacion-neostar/manual-integrado/2-0-politica-de-c
 titulo = "Política del Sistema de Gestión Integrado"
 icono = "politica"
 
+[[accesos]]
+documento = "manuales-y-documentacion-neostar/manual-integrado/f-1-0-01-organigrama"
+titulo = "Organigrama"
+icono = "organigrama"
+
 # Las secciones se identifican por el slug del nombre de su carpeta, sin el número
 # de orden: "01. MANUALES  Y DOCUMENTACIÓN NEOSTAR" → manuales-y-documentacion-neostar.
 # Una carpeta que no figura acá aparece igual, con su nombre y un ícono genérico.
 # Íconos disponibles: manuales, puestos, capacitaciones, controles, cronogramas,
 # buzones, encuestas, carpeta.
+#
+# Una sección con "enlace" no muestra los documentos del disco: su tarjeta abre esa dirección
+# (en otra pestaña) y lo que haya en su carpeta deja de aparecer en el portal y en el buscador.
+# La tarjeta sigue en la home aunque la carpeta quede vacía o se borre del disco; por eso
+# lleva "orden" (el número que tenía la carpeta), para conservar su lugar. "enlace_nota" es
+# el texto chico al pie de la tarjeta.
 
 [secciones.manuales-y-documentacion-neostar]
 titulo = "Manuales y Documentación"
@@ -38,8 +49,12 @@ icono = "puestos"
 
 [secciones.capacitaciones-neostar]
 titulo = "Capacitaciones"
-descripcion = "Calidad, medio ambiente, seguridad y salud en el trabajo, SGI."
+descripcion = "Material vigente de capacitaciones, en el espacio de RRHH."
 icono = "capacitaciones"
+# El material de capacitaciones lo mantiene RRHH: una sola fuente, sin copias en el disco SGI.
+enlace = "https://multiversorrhh.com/mi-neoschool"
+enlace_nota = "Capacitaciones de RRHH"
+orden = 3
 
 [secciones.controles-operativos-neostar]
 titulo = "Controles Operativos"
@@ -63,23 +78,56 @@ icono = "encuestas"
 
 # Certificación vigente. Al renovarla: regenerar el sello con tools/render_sello.py
 # y actualizar estos datos.
+# Los textos también se editan acá: "cierre" es la frase destacada al final del recuadro,
+# [certificacion.descripcion] es la presentación del SGI y cada norma lleva la explicación
+# que se despliega al hacer clic en ella ("titulo", "introduccion", "aplicacion" con un
+# párrafo por elemento, y "compromiso"). Una norma sin "introduccion" se muestra sin desplegable.
 [certificacion]
 certificador = "TÜV Rheinland"
 id = "9000015845"
 sello = "img/certificacion/tuv-rheinland-9000015845"  # sin "-1200.png" / "-2400.png"
 verificar_url = "http://m.certipedia.com/?id=9000015845"  # la misma dirección que el QR del sello
+cierre = "El SGI no es responsabilidad de una sola área. Cada colaborador contribuye a su cumplimiento a través de sus decisiones y acciones diarias."
+
+[certificacion.descripcion]
+titulo = "¿Qué es nuestro Sistema de Gestión Integrado?"
+parrafos = [
+  "En Neostar, el Sistema de Gestión Integrado (SGI) forma parte de nuestra manera de trabajar. Nos permite organizar y mejorar continuamente nuestros procesos, cumplir con los requisitos aplicables, prevenir riesgos y fortalecer tres compromisos fundamentales: brindar servicios de calidad, cuidar el medio ambiente y proteger la seguridad y salud de las personas.",
+  "El SGI está presente en todas nuestras concesionarias, desde la atención al cliente y la entrega de vehículos hasta las actividades de taller, administración y servicios de apoyo.",
+]
 
 [[certificacion.normas]]
 norma = "ISO 9001:2015"
 nombre = "Calidad"
 icono = "calidad"
+titulo = "Gestión de la Calidad"
+introduccion = "La calidad está presente en cada etapa de nuestra relación con el cliente y en los procesos que nos permiten brindar un buen servicio."
+aplicacion = [
+  "Cuando brindamos información clara sobre un vehículo, cumplimos con lo acordado en una operación, verificamos las condiciones de una unidad antes de entregarla, realizamos los controles de un servicio de taller o gestionamos un reclamo para evitar que vuelva a ocurrir.",
+  "También cuando seguimos nuestros procedimientos, mantenemos registros confiables y buscamos mejorar nuestra manera de trabajar.",
+]
+compromiso = "trabajar de forma organizada, cumplir los requisitos y mejorar continuamente la satisfacción de nuestros clientes."
 
 [[certificacion.normas]]
 norma = "ISO 14001:2015"
 nombre = "Medio Ambiente"
 icono = "ambiente"
+titulo = "Gestión Ambiental"
+introduccion = "Nuestras actividades generan impactos ambientales que debemos identificar, prevenir y controlar, tanto en los talleres como en las áreas comerciales y administrativas."
+aplicacion = [
+  "Cuando separamos y disponemos correctamente los residuos, gestionamos los aceites usados, filtros y otros materiales provenientes del taller, evitamos derrames, controlamos los efluentes de los lavaderos o hacemos un uso responsable del agua, la energía y el papel.",
+  "También cuando identificamos situaciones que podrían generar contaminación y tomamos medidas para prevenirlas.",
+]
+compromiso = "reducir nuestro impacto ambiental, cumplir los requisitos aplicables y utilizar responsablemente los recursos."
 
 [[certificacion.normas]]
 norma = "ISO 45001:2018"
 nombre = "Seguridad y Salud en el Trabajo"
 icono = "seguridad"
+titulo = "Seguridad y Salud en el Trabajo"
+introduccion = "La seguridad y la salud son responsabilidad de todos. Cada puesto de trabajo presenta riesgos que debemos conocer y prevenir para desarrollar nuestras actividades de manera segura."
+aplicacion = [
+  "Cuando utilizamos los elementos de protección personal correspondientes, mantenemos despejadas las salidas de emergencia, respetamos las señalizaciones, manipulamos correctamente herramientas y equipos o informamos sobre una condición insegura.",
+  "También cuando participamos en capacitaciones, simulacros de evacuación e identificamos riesgos en nuestras tareas, ya sea en un taller, salón de ventas, depósito u oficina.",
+]
+compromiso = "prevenir lesiones y enfermedades laborales, reducir los riesgos y promover ambientes de trabajo seguros y saludables."

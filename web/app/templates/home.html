@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_iconos.html" import icono, icono_norma, simbolo %}
-{% from "_tarjetas.html" import tarjeta_seccion with context %}
+{% from "_tarjetas.html" import tarjeta_seccion, tarjeta_enlace with context %}
 
 {% block contenido %}
 <section class="contenedor hero">
@@ -49,9 +49,10 @@
 {% if cert %}
 <section class="contenedor bloque" aria-labelledby="titulo-certificacion">
   <h2 class="titulo-bloque" id="titulo-certificacion">Certificación vigente</h2>
-  <article class="certificacion">
+  <article class="certificacion" data-normas>
     <div class="cert-cuerpo">
-      {# El sello se muestra tal cual lo entrega el certificador: sin recortes, filtros ni sombras. #}
+      {# El sello se muestra tal cual lo entrega el certificador: sin recortes ni filtros.
+         Los bordes redondeados son del marco que lo contiene, no de la imagen. #}
       <a class="cert-sello" href="{{ url_for('static', filename=cert.sello ~ '-2400.png') }}" target="_blank" rel="noopener"
          title="Ver el sello en tamaño completo">
         <img src="{{ url_for('static', filename=cert.sello ~ '-1200.png') }}"
@@ -61,20 +62,66 @@
       </a>
       <div class="cert-detalle">
         <p class="cert-titulo">Sistema de Gestión Integrado certificado</p>
+        {% if cert.descripcion %}
+        <div class="cert-descripcion">
+          {% if cert.descripcion.titulo %}<h3>{{ cert.descripcion.titulo }}</h3>{% endif %}
+          {% for parrafo in cert.descripcion.parrafos %}<p>{{ parrafo }}</p>{% endfor %}
+        </div>
+        {% endif %}
         <ul class="normas">
           {% for n in cert.normas %}
-            <li class="norma">
-              {{ icono_norma(n.icono) }}
-              <span><strong class="norma-codigo norma-{{ n.icono }}">{{ n.norma }}</strong><span class="norma-nombre">{{ n.nombre }}</span></span>
+            <li class="norma norma-{{ n.icono }}">
+              {% if n.introduccion %}
+              <button class="norma-fila norma-boton" type="button" aria-expanded="false" aria-controls="norma-{{ n.icono }}">
+                {{ icono_norma(n.icono) }}
+                <span class="norma-texto"><strong class="norma-codigo">{{ n.norma }}</strong><span class="norma-nombre">{{ n.nombre }}</span></span>
+                {{ simbolo("abajo", "norma-indicador") }}
+              </button>
+              {% else %}
+              <div class="norma-fila">
+                {{ icono_norma(n.icono) }}
+                <span class="norma-texto"><strong class="norma-codigo">{{ n.norma }}</strong><span class="norma-nombre">{{ n.nombre }}</span></span>
+              </div>
+              {% endif %}
             </li>
           {% endfor %}
         </ul>
-        <p class="cert-pie">
-          <span>Certificado por {{ cert.certificador }} · ID {{ cert.id }}</span>
-          <a href="{{ cert.verificar_url }}" target="_blank" rel="noopener">Verificar en Certipedia {{ simbolo("externo") }}</a>
-        </p>
       </div>
     </div>
+
+    {# Descripción de cada norma: se abre desde su botón, de a una por vez (js/certificacion.js).
+       Sin JavaScript quedan las tres a la vista. #}
+    <noscript><style>.norma-panel[hidden] { display: block; } .norma-cerrar, .norma-indicador { display: none; }</style></noscript>
+    {% for n in cert.normas if n.introduccion %}
+    <div class="norma-panel norma-{{ n.icono }}" id="norma-{{ n.icono }}" role="region" aria-labelledby="norma-{{ n.icono }}-titulo" hidden>
+      <header class="norma-panel-cabecera">
+        {{ icono_norma(n.icono) }}
+        <h3 id="norma-{{ n.icono }}-titulo"><span class="norma-codigo">{{ n.norma }}</span> – {{ n.titulo or n.nombre }}</h3>
+        <button class="norma-cerrar" type="button" aria-label="Cerrar la descripción de {{ n.norma }}">{{ simbolo("cerrar") }}</button>
+      </header>
+      <p class="norma-intro">{{ n.introduccion }}</p>
+      <div class="norma-columnas">
+        {% if n.aplicacion %}
+        <div class="norma-aplicacion">
+          <h4>¿Cómo la aplicamos en nuestras concesionarias?</h4>
+          {% for parrafo in n.aplicacion %}<p>{{ parrafo }}</p>{% endfor %}
+        </div>
+        {% endif %}
+        {% if n.compromiso %}
+        <p class="norma-compromiso"><strong>Nuestro compromiso:</strong> {{ n.compromiso }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if cert.cierre %}
+    <p class="cert-cierre">{{ simbolo("equipo") }}<span>{{ cert.cierre }}</span></p>
+    {% endif %}
+
+    <p class="cert-pie">
+      <span>Certificado por {{ cert.certificador }} · ID {{ cert.id }}</span>
+      <a href="{{ cert.verificar_url }}" target="_blank" rel="noopener">Verificar en Certipedia {{ simbolo("externo") }}</a>
+    </p>
   </article>
 </section>
 {% endif %}
@@ -85,7 +132,7 @@
     <p class="subtitulo">Seleccioná una categoría para acceder a la información.</p>
   </div>
   <div class="grilla">
-    {% for s in secciones %}{{ tarjeta_seccion(s, etiqueta="Sección") }}{% endfor %}
+    {% for v in secciones %}{{ tarjeta_enlace(v) if v.enlace else tarjeta_seccion(v.seccion, etiqueta="Sección") }}{% endfor %}
   </div>
 </section>
 
@@ -104,4 +151,8 @@
   </div>
 </section>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if cert %}<script src="{{ url_for('static', filename='js/certificacion.js') }}" defer></script>{% endif %}
 {% endblock %}

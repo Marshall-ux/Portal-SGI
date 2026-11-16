@@ -16,6 +16,7 @@ DISCO = {
         "F 8.4-01 - Autorización Generica_Rev.07.xls": 300,
         "01. MANUAL INTEGRADO": {
             "2.0 Politica de Calidad Medio Ambiente, Seguridad y Salud en el Trabajo_Rev.04.pdf": 50,
+            "F 1.0 01 - Organigrama_Rev.33.pdf": 60,
         },
     },
     "08. CARPETA NUEVA DE SGI": {"informe.pdf": 1},
@@ -62,6 +63,9 @@ def test_aclaracion_configurable(data_dir):
 POLITICA = "manuales-y-documentacion-neostar/manual-integrado/2-0-politica-de-calidad-medio-ambiente-seguridad-y-salud-en-el-trabajo"
 
 
+ORGANIGRAMA = "manuales-y-documentacion-neostar/manual-integrado/f-1-0-01-organigrama"
+
+
 def bloque(page, id_titulo):
     return page.split(f'id="{id_titulo}"')[1].split("</section>")[0]
 
@@ -72,6 +76,8 @@ def test_home_accesos_rapidos_desde_la_configuracion(client):
     assert accesos.index('href="/d/mapa-de-proceso"') < accesos.index(f'href="/d/{POLITICA}"')
     assert "Mapa de Proceso" in accesos
     assert "Política del Sistema de Gestión Integrado" in accesos
+    assert accesos.index(f'href="/d/{POLITICA}"') < accesos.index(f'href="/d/{ORGANIGRAMA}"')
+    assert ">Organigrama<" in accesos
     assert "ACUERDO" not in accesos
 
 
@@ -121,6 +127,38 @@ def test_home_certificacion(client):
     assert 'href="http://m.certipedia.com/?id=9000015845"' in page
 
 
+def test_home_certificacion_descripcion_y_normas_desplegables(client):
+    cert = bloque(html(client.get("/")), "titulo-certificacion")
+    assert "¿Qué es nuestro Sistema de Gestión Integrado?" in cert
+    assert "El SGI está presente en todas nuestras concesionarias" in cert
+    # Cada norma es un botón que controla su cuadro, cerrado al entrar
+    for clave, titulo in [("calidad", "ISO 9001:2015</span> – Gestión de la Calidad"),
+                          ("ambiente", "ISO 14001:2015</span> – Gestión Ambiental"),
+                          ("seguridad", "ISO 45001:2018</span> – Seguridad y Salud en el Trabajo")]:
+        assert f'aria-expanded="false" aria-controls="norma-{clave}"' in cert
+        assert f'id="norma-{clave}" role="region" aria-labelledby="norma-{clave}-titulo" hidden' in cert
+        assert titulo in cert
+    assert cert.count("¿Cómo la aplicamos en nuestras concesionarias?") == 3
+    assert cert.count("Nuestro compromiso:") == 3
+    assert "El SGI no es responsabilidad de una sola área." in cert
+    assert "js/certificacion.js" in html(client.get("/"))
+    r = client.get("/static/js/certificacion.js")
+    assert r.status_code == 200
+    r.close()
+
+
+def test_home_certificacion_sin_textos_sigue_mostrando_las_normas(data_dir):
+    app = create_app({"DATA_DIR": str(data_dir)})
+    cert = app.config["PORTAL"]["certificacion"]
+    app.config["PORTAL"]["certificacion"] = {
+        **{k: v for k, v in cert.items() if k not in ("descripcion", "cierre")},
+        "normas": [{k: n[k] for k in ("norma", "nombre", "icono")} for n in cert["normas"]],
+    }
+    page = bloque(html(app.test_client().get("/")), "titulo-certificacion")
+    assert "ISO 14001:2015" in page and "Medio Ambiente" in page
+    assert "<button" not in page and 'class="norma-panel' not in page and "cert-cierre" not in page
+
+
 def test_imagenes_del_sello_existen(client):
     for ancho in (1200, 2400):
         r = client.get(f"/static/img/certificacion/tuv-rheinland-9000015845-{ancho}.png")
@@ -151,6 +189,34 @@ def test_sin_copia_publicada_muestra_preparando(tmp_path):
     r = client.get("/")
     assert r.status_code == 503
     assert "Estamos preparando el portal" in html(r)
+
+
+def test_seccion_con_enlace_abre_otro_sitio(data_dir):
+    """Capacitaciones lleva al espacio de RRHH: no se muestra lo que quede en su carpeta."""
+    carpeta = data_dir / "current" / "03. CAPACITACIONES NEOSTAR" / "01. CALIDAD"
+    carpeta.mkdir(parents=True)
+    (carpeta / "Capacitacion vieja de calidad.pdf").write_bytes(b"x")
+    client = create_app({"DATA_DIR": str(data_dir)}).test_client()
+
+    page = html(client.get("/"))
+    assert 'href="https://multiversorrhh.com/mi-neoschool" target="_blank" rel="noopener"' in page
+    assert 'href="/s/capacitaciones-neostar"' not in page
+    assert "Sección 03" in page and "Capacitaciones de RRHH" in page
+    # La sección y sus subcarpetas redirigen (enlaces guardados)
+    for ruta in ("/s/capacitaciones-neostar", "/s/capacitaciones-neostar/calidad"):
+        r = client.get(ruta)
+        assert r.status_code == 302 and r.headers["Location"] == "https://multiversorrhh.com/mi-neoschool"
+    # El material que quede en la carpeta no aparece en el buscador
+    page = html(client.get("/buscar?q=calidad"))
+    assert "Capacitacion vieja" not in page and 'href="/s/capacitaciones-neostar/calidad"' not in page
+
+
+def test_seccion_con_enlace_sigue_en_la_home_sin_carpeta_en_el_disco(client):
+    """Al retirar el material la carpeta queda vacía o se borra: la tarjeta sigue, en su lugar."""
+    page = html(client.get("/"))
+    assert 'href="https://multiversorrhh.com/mi-neoschool"' in page
+    assert page.index("Sección 01") < page.index("Sección 03") < page.index("Sección 08")
+    assert client.get("/s/capacitaciones-neostar").status_code == 302
 
 
 # ── Secciones y buscador ────────────────────────────────────────────────────
@@ -273,8 +339,8 @@ def test_documento_inexistente(client, ruta):
 
 def test_salud(client, tmp_path):
     datos = client.get("/salud").get_json()
-    # 6 archivos, 5 documentos: el PDF y el XLS de la Autorización son una sola ficha
-    assert datos["estado"] == "ok" and datos["documentos"] == 5
+    # 7 archivos, 6 documentos: el PDF y el XLS de la Autorización son una sola ficha
+    assert datos["estado"] == "ok" and datos["documentos"] == 6
     assert datos["ultima_sincronizacion"] is not None
     vacio = create_app({"DATA_DIR": str(tmp_path / "vacio")}).test_client().get("/salud")
     assert vacio.status_code == 503 and vacio.get_json()["estado"] == "sin_datos"

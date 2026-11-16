@@ -53,10 +53,13 @@ def _capitalizar(palabra: str) -> str:
 class SeccionVista:
     """Datos de una sección listos para mostrar."""
 
-    seccion: Section
+    seccion: Section | None  # None: sección con enlace cuya carpeta ya no está en el disco
     titulo: str
     descripcion: str
     icono: str
+    enlace: str = ""  # dirección externa que reemplaza al contenido del disco
+    enlace_nota: str = ""
+    orden: int | None = None
 
 
 def vista_seccion(section: Section, config: dict) -> SeccionVista:
@@ -69,7 +72,35 @@ def vista_seccion(section: Section, config: dict) -> SeccionVista:
         titulo=cfg.get("titulo") or titulo_legible(section.title),
         descripcion=cfg.get("descripcion", ""),
         icono=cfg.get("icono", "carpeta"),
+        enlace=cfg.get("enlace", ""),
+        enlace_nota=cfg.get("enlace_nota", ""),
+        orden=section.info.order,
     )
+
+
+def secciones_enlazadas(config: dict) -> dict[str, str]:
+    """Secciones principales que llevan a otro sitio en vez de mostrar el disco: slug → dirección."""
+    return {slug: cfg["enlace"] for slug, cfg in config.get("secciones", {}).items() if cfg.get("enlace")}
+
+
+def secciones_home(index: Index, config: dict) -> list[SeccionVista]:
+    """Tarjetas de Documentación de la home: las carpetas del disco más las secciones con
+    enlace cuya carpeta ya no está (vacía o borrada), ubicadas por su "orden"."""
+    vistas = [vista_seccion(s, config) for s in index.root.sections]
+    presentes = {s.slug for s in index.root.sections}
+    for slug, cfg in config.get("secciones", {}).items():
+        if cfg.get("enlace") and slug not in presentes:
+            vistas.append(SeccionVista(
+                seccion=None,
+                titulo=cfg.get("titulo") or slug,
+                descripcion=cfg.get("descripcion", ""),
+                icono=cfg.get("icono", "carpeta"),
+                enlace=cfg["enlace"],
+                enlace_nota=cfg.get("enlace_nota", ""),
+                orden=cfg.get("orden"),
+            ))
+    # Orden estable: entre las del disco se conserva el del índice
+    return sorted(vistas, key=lambda v: (v.orden is None, v.orden or 0))
 
 
 def migas(section: Section, config: dict) -> list[SeccionVista]:

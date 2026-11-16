@@ -10,7 +10,7 @@ from . import reporte as rep
 from .indexer import Document, Index, Section
 from .search import buscar as buscar_en
 from .store import IndexStore
-from .vistas import accesos_rapidos, icono_documento, migas, vista_seccion
+from .vistas import accesos_rapidos, icono_documento, migas, secciones_enlazadas, secciones_home, vista_seccion
 
 bp = Blueprint("portal", __name__)
 
@@ -52,14 +52,20 @@ def home():
         accesos=accesos,
         # Los archivos de la raíz del disco que no son accesos rápidos
         otros=[d for d in index.root.documents if id(d) not in en_accesos],
-        secciones=index.root.sections,
+        secciones=secciones_home(index, current_app.config["PORTAL"]),
         cert=current_app.config["PORTAL"].get("certificacion"),
     )
 
 
 @bp.get("/s/<path:ruta>")
 def seccion(ruta: str):
-    section = _index_o_preparando().section(ruta)
+    index = _index_o_preparando()
+    # Sección que lleva a otro sitio: también para los enlaces guardados a sus subcarpetas,
+    # y aunque la carpeta ya no esté en el disco
+    enlace = secciones_enlazadas(current_app.config["PORTAL"]).get(ruta.strip("/").split("/")[0])
+    if enlace:
+        return redirect(enlace)
+    section = index.section(ruta)
     if section is None:
         abort(404)
     return render_template("seccion.html", seccion=section)
@@ -69,7 +75,8 @@ def seccion(ruta: str):
 def buscar():
     index = _index_o_preparando()
     dentro: Section | None = index.section(request.args.get("en", "")) if request.args.get("en") else None
-    resultados = buscar_en(index, request.args.get("q", ""), dentro)
+    resultados = buscar_en(index, request.args.get("q", ""), dentro,
+                           omitir=secciones_enlazadas(current_app.config["PORTAL"]).keys())
     return render_template("buscar.html", resultados=resultados, dentro=dentro)
 
 
