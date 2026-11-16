@@ -38,7 +38,9 @@ def _frase_en(frase: str, texto: str) -> bool:
     return f" {texto} ".find(f" {frase}") >= 0
 
 
-def buscar(index: Index, consulta: str, dentro: Section | None = None, limite: int = LIMITE) -> Resultados:
+def buscar(index: Index, consulta: str, dentro: Section | None = None, limite: int = LIMITE,
+           omitir=frozenset()) -> Resultados:
+    """omitir: slugs de secciones principales que no se buscan (las que llevan a otro sitio)."""
     tokens = _palabras(consulta)
     resultados = Resultados(consulta=consulta.strip())
     if not tokens:
@@ -48,6 +50,8 @@ def buscar(index: Index, consulta: str, dentro: Section | None = None, limite: i
 
     encontrados = []
     for section in raiz.walk():
+        if section.breadcrumb and section.breadcrumb[0].slug in omitir:
+            continue
         if section is not raiz and _coincide(tokens, _palabras(f"{section.title} {titulo_legible(section.title)}")):
             resultados.secciones.append(section)
         ruta = _palabras(" ".join(s.title for s in section.breadcrumb))

@@ -185,6 +185,12 @@ class Index:
     def document(self, path: str) -> Document | None:
         return self._documents.get(path.strip("/"))
 
+    def moved_document(self, path: str) -> Document | None:
+        """Documento que ya no está en esa ruta pero cuyo nombre es único en el disco: se movió de carpeta."""
+        slug = path.strip("/").rsplit("/", 1)[-1]
+        candidatos = [d for d in self._documents.values() if d.slug == slug]
+        return candidatos[0] if len(candidatos) == 1 else None
+
     @property
     def documents(self) -> list[Document]:
         return list(self._documents.values())

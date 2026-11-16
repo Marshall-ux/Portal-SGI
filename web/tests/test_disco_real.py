@@ -4,12 +4,17 @@ Ruta: variable SGI_DISCO_PRUEBA o, por defecto, C:\\Temp\\DocumentacionISO.
 Comprueba invariantes, no cantidades exactas, porque el disco cambia.
 """
 import os
+import tomllib
 
 import pytest
 
-from app.indexer import build_index
+from app.indexer import DEFAULT_EXCLUDES, Exclusions, build_index
+from app.vistas import accesos_rapidos
 
 RUTA = os.environ.get("SGI_DISCO_PRUEBA", r"C:\Temp\DocumentacionISO")
+CONFIG = os.path.join(os.path.dirname(__file__), os.pardir, "config", "portal.toml")
+with open(CONFIG, "rb") as f:
+    PORTAL = tomllib.load(f)
 
 pytestmark = pytest.mark.skipif(not os.path.isdir(RUTA), reason=f"No hay copia del disco en {RUTA}")
 
@@ -17,6 +22,12 @@ pytestmark = pytest.mark.skipif(not os.path.isdir(RUTA), reason=f"No hay copia d
 @pytest.fixture(scope="module")
 def index():
     return build_index(RUTA)
+
+
+@pytest.fixture(scope="module")
+def index_portal():
+    """El índice como lo arma el portal: con las exclusiones técnicas y las de portal.toml."""
+    return build_index(RUTA, Exclusions(Exclusions.parse(DEFAULT_EXCLUDES).patterns + PORTAL.get("no_publicar", [])))
 
 
 def test_secciones_principales(index):
@@ -33,9 +44,16 @@ def test_secciones_principales(index):
     assert not any("aspnet" in t.lower() for t in titulos)
 
 
-def test_accesos_rapidos_en_la_raiz(index):
-    raiz = [d.info.title for d in index.root.documents]
-    assert raiz[:2] == ["Guia de Acceso Documentación SGI", "Mapa de Proceso"]
+def test_accesos_rapidos_configurados_existen(index_portal):
+    """Cada acceso de portal.toml encuentra su documento en el disco real."""
+    accesos = accesos_rapidos(index_portal, PORTAL)
+    assert accesos, "portal.toml no tiene accesos rápidos"
+    assert [a.ruta for a in accesos if a.documento is None] == []
+
+
+def test_guia_de_acceso_no_se_publica(index_portal):
+    assert not any("guia de acceso" in d.key for d in index_portal.documents)
+    assert any(r.startswith("00. Guia de Acceso") for r in index_portal.excluded)
 
 
 def test_nada_tecnico_publicado(index):
