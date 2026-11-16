@@ -1,4 +1,4 @@
-{# Tarjetas y ruta de navegación. Uso: {% from "_tarjetas.html" import tarjeta_seccion, tarjeta_documento, ruta_navegacion %} #}
+{# Tarjetas y ruta de navegación. Uso: {% from "_tarjetas.html" import tarjeta_seccion, tarjeta_enlace, tarjeta_documento, ruta_navegacion %} #}
 {% from "_iconos.html" import icono, simbolo %}
 
 {# Sección: toda la tarjeta es el enlace. #}
@@ -16,6 +16,24 @@
   <span class="tarjeta-pie">
     <span>Ingresar <small>· {{ section.document_count }} {{ "documento" if section.document_count == 1 else "documentos" }}</small></span>
     <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>
+  </span>
+</a>
+{%- endmacro %}
+
+{# Sección que lleva a otro sitio (config/portal.toml, "enlace"): se abre en otra pestaña. #}
+{% macro tarjeta_enlace(v) -%}
+<a class="tarjeta" href="{{ v.enlace }}" target="_blank" rel="noopener">
+  <span class="tarjeta-arriba">
+    {{ icono(v.icono) }}
+    <span class="tarjeta-info">
+      <span class="tarjeta-etiqueta">Sección{% if v.orden is not none %} {{ '%02d' % v.orden }}{% endif %}</span>
+      <span class="tarjeta-titulo">{{ v.titulo }}</span>
+      {% if v.descripcion %}<span class="tarjeta-desc">{{ v.descripcion }}</span>{% endif %}
+    </span>
+  </span>
+  <span class="tarjeta-pie">
+    <span>Ingresar{% if v.enlace_nota %} <small>· {{ v.enlace_nota }}</small>{% endif %}<span class="oculto"> (se abre en otra pestaña)</span></span>
+    <span class="tarjeta-flecha">{{ simbolo("externo") }}</span>
   </span>
 </a>
 {%- endmacro %}
