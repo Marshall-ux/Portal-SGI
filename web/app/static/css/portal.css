@@ -191,7 +191,7 @@ a { color: var(--sgi-primario); }
 .tarjeta-pie small { font-weight: 500; color: var(--texto-suave); font-size: 0.8rem; }
 .tarjeta-flecha { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; }
 .tarjeta-flecha .simbolo { width: 20px; height: 20px; color: var(--sgi-primario); stroke-width: 2.5; }
-.tarjeta:hover .tarjeta-flecha .simbolo, .fila:hover .tarjeta-flecha .simbolo { transform: translateX(3px); }
+.tarjeta:hover .tarjeta-flecha .simbolo { transform: translateX(3px); }
 
 /* Tarjeta de documento: el enlace del título se estira sobre toda la tarjeta;
    los botones de otros formatos quedan por encima y son clickeables por separado. */
@@ -245,6 +245,7 @@ a { color: var(--sgi-primario); }
   background: var(--blanco); border: 1.5px solid var(--borde); border-radius: var(--radio);
   padding: 32px 36px; box-shadow: var(--sombra);
 }
+.cert-encabezado { display: flex; flex-direction: column; gap: 14px; margin-bottom: 26px; }
 .cert-cuerpo { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 44px; align-items: center; }
 /* Sin filtros, sombras ni recortes sobre la marca del certificador: lo redondeado es el marco. */
 .cert-sello {
@@ -323,17 +324,42 @@ a { color: var(--sgi-primario); }
 .secciones-encabezado { margin-bottom: 22px; }
 .grilla { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 
-/* ── Otros documentos ── */
-.otros { padding-bottom: 52px; }
-.lista { display: flex; flex-direction: column; gap: 10px; }
-.fila {
-  display: flex; align-items: center; gap: 16px;
-  background: var(--blanco); border: 1.5px solid var(--borde); border-radius: 12px;
-  padding: 12px 18px; text-decoration: none; color: inherit; transition: border-color 0.2s ease;
+/* ── Canales de participación y reporte ── */
+.canales { padding-bottom: 52px; }
+.canales-encabezado { max-width: 860px; margin-bottom: 22px; }
+.canales-lema { margin-top: 6px; font-family: var(--fuente-titulos); font-weight: 700; font-size: 1.1rem; color: var(--sgi-primario); }
+.canales-encabezado .subtitulo { margin-top: 10px; line-height: 1.6; }
+.canales-indicacion { margin-top: 8px; font-weight: 600; color: var(--texto-fuerte); }
+.canales-lista { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+.canal {
+  display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 36px; align-items: center;
+  background: var(--blanco); border: 1.5px solid var(--borde); border-radius: var(--radio);
+  padding: 24px 28px; box-shadow: var(--sombra);
 }
-.fila:hover { border-color: var(--sgi-borde-acento); }
-.fila-titulo { flex: 1; min-width: 0; font-weight: 600; color: var(--texto-fuerte); font-size: 0.92rem; overflow-wrap: anywhere; }
-.fila-meta { font-size: 0.8rem; color: var(--texto-suave); white-space: nowrap; }
+.canal-cuerpo { display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; line-height: 1.6; }
+.canal-cabecera { display: flex; align-items: center; gap: 16px; margin-bottom: 6px; }
+.canal-icono { width: 52px; height: 52px; }
+.canal-nombre { font-family: var(--fuente-titulos); font-size: 1.12rem; font-weight: 700; line-height: 1.3; color: var(--texto-fuerte); }
+.canal-alcance { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 5px; font-size: 0.8rem; line-height: 1.4; color: var(--texto-suave); }
+.canal-publico {
+  padding: 3px 11px; border-radius: 50px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px;
+  background: var(--sgi-superficie); color: var(--sgi-primario);
+}
+.canal-publico-externo { background: var(--sgi-primario); color: var(--blanco); }
+.canal-pregunta { font-family: var(--fuente-titulos); font-size: 1rem; font-weight: 600; line-height: 1.45; color: var(--sgi-primario); }
+.canal-ejemplo { padding: 10px 14px; border-radius: 10px; background: var(--sgi-fondo); font-size: 0.84rem; }
+.canal-ejemplo strong, .canal-nota strong { color: var(--texto-fuerte); }
+/* Advertencia con los tintes de ISO 45001 (seguridad) */
+.canal-importante {
+  display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: 10px;
+  background: #FEF4EA; border: 1.5px solid #FAD3B0; color: var(--texto-fuerte); font-size: 0.84rem;
+}
+.canal-importante .simbolo { flex-shrink: 0; margin-top: 2px; color: var(--iso-45001); }
+.canal-accion { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.canal-qr { width: 136px; padding: 8px; background: var(--blanco); border: 1.5px solid var(--borde); border-radius: 12px; }
+.canal-qr svg { display: block; width: 100%; height: auto; }
+.canal-qr-texto { font-size: 0.75rem; color: var(--texto-suave); }
+.canal-accion .canal-boton { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 10px 18px; font-size: 0.86rem; white-space: nowrap; }
 
 /* ── Mensajes (preparando, errores) ── */
 .mensaje { padding-top: 72px; padding-bottom: 96px; max-width: 760px; }
@@ -464,8 +490,12 @@ a { color: var(--sgi-primario); }
   .cert-sello { padding: 10px; }
   .norma-panel { padding: 18px 16px; }
   .cert-cierre { align-items: flex-start; padding: 16px 18px; font-size: 0.94rem; }
-  .fila { flex-wrap: wrap; }
-  .fila-meta { order: 3; width: 100%; padding-left: 56px; margin-top: -8px; }
+  /* En el celular el QR no se puede escanear desde la misma pantalla: queda el botón */
+  .canal { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 20px 18px; }
+  .canal-icono { width: 44px; height: 44px; }
+  .canal-qr, .canal-qr-texto { display: none; }
+  .canal-accion { align-items: stretch; }
+  .canal-accion .canal-boton { justify-content: center; margin-top: 0; }
   .pie-linea img { margin: 0 14px; height: 20px; }
 }
 

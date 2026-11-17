@@ -50,6 +50,16 @@
 <section class="contenedor bloque" aria-labelledby="titulo-certificacion">
   <h2 class="titulo-bloque" id="titulo-certificacion">Certificación vigente</h2>
   <article class="certificacion" data-normas>
+    {# Título y texto ocupan todo el ancho; debajo, el sello queda a la par de los desplegables. #}
+    <div class="cert-encabezado">
+      <p class="cert-titulo">Sistema de Gestión Integrado certificado</p>
+      {% if cert.descripcion %}
+      <div class="cert-descripcion">
+        {% if cert.descripcion.titulo %}<h3>{{ cert.descripcion.titulo }}</h3>{% endif %}
+        {% for parrafo in cert.descripcion.parrafos %}<p>{{ parrafo }}</p>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
     <div class="cert-cuerpo">
       {# El sello se muestra tal cual lo entrega el certificador: sin recortes ni filtros.
          Los bordes redondeados son del marco que lo contiene, no de la imagen. #}
@@ -61,13 +71,6 @@
              alt="Sello {{ cert.certificador }}: Sistema de Gestión certificado {% for n in cert.normas %}{{ n.norma }}{{ ', ' if not loop.last }}{% endfor %}. ID {{ cert.id }}.">
       </a>
       <div class="cert-detalle">
-        <p class="cert-titulo">Sistema de Gestión Integrado certificado</p>
-        {% if cert.descripcion %}
-        <div class="cert-descripcion">
-          {% if cert.descripcion.titulo %}<h3>{{ cert.descripcion.titulo }}</h3>{% endif %}
-          {% for parrafo in cert.descripcion.parrafos %}<p>{{ parrafo }}</p>{% endfor %}
-        </div>
-        {% endif %}
         <ul class="normas">
           {% for n in cert.normas %}
             <li class="norma norma-{{ n.icono }}">
@@ -136,19 +139,45 @@
   </div>
 </section>
 
-{% if otros %}
-<section class="contenedor otros" aria-labelledby="titulo-otros">
-  <h2 class="titulo-bloque" id="titulo-otros">Otros documentos</h2>
-  <div class="lista">
-    {% for doc in otros %}
-      <a class="fila" href="{{ url_for('portal.documento', ruta=doc.path) }}" target="_blank" rel="noopener">
-        {{ icono("documento", "icono-chico") }}
-        <span class="fila-titulo">{{ doc.info.label }}</span>
-        <span class="fila-meta">{{ doc.primary.ext | formato }} · {{ doc.primary.mtime | fecha_corta }}</span>
-        <span class="tarjeta-flecha">{{ simbolo("flecha") }}</span>
-      </a>
-    {% endfor %}
+{% if canales %}
+{% set PUBLICO = {"externo": "Público interno y externo", "interno": "Uso interno"} %}
+<section class="contenedor canales" aria-labelledby="titulo-canales">
+  <div class="canales-encabezado">
+    <h2 class="titulo-seccion" id="titulo-canales">{{ canales.titulo }}</h2>
+    {% if canales.lema %}<p class="canales-lema">{{ canales.lema }}</p>{% endif %}
+    {% if canales.descripcion %}<p class="subtitulo">{{ canales.descripcion }}</p>{% endif %}
+    {% if canales.indicacion %}<p class="canales-indicacion">{{ canales.indicacion }}</p>{% endif %}
   </div>
+  <ul class="canales-lista">
+    {% for c in canales.lista %}
+    <li class="canal">
+      <div class="canal-cuerpo">
+        <div class="canal-cabecera">
+          {{ icono(c.icono, "canal-icono") }}
+          <div>
+            <h3 class="canal-nombre">{{ c.nombre }}</h3>
+            <p class="canal-alcance">
+              <span class="canal-publico canal-publico-{{ c.publico }}">{{ PUBLICO.get(c.publico, PUBLICO.interno) }}</span>
+              {% if c.alcance %}<span>{{ c.alcance }}</span>{% endif %}
+            </p>
+          </div>
+        </div>
+        <p class="canal-pregunta">{{ c.pregunta }}</p>
+        <p class="canal-texto">{{ c.descripcion }}</p>
+        {% if c.ejemplo %}<p class="canal-ejemplo"><strong>Por ejemplo:</strong> {{ c.ejemplo }}</p>{% endif %}
+        {% if c.nota %}<p class="canal-texto canal-nota">{% if c.nota_titulo %}<strong>{{ c.nota_titulo }}</strong> {% endif %}{{ c.nota }}</p>{% endif %}
+        {% if c.importante %}<p class="canal-importante">{{ simbolo("aviso") }}<span><strong>Importante:</strong> {{ c.importante }}</span></p>{% endif %}
+      </div>
+      {# El QR sirve en la computadora (para abrirlo en el celular, o para que lo escanee
+         alguien externo); en el celular se oculta y queda el botón. #}
+      <div class="canal-accion">
+        <div class="canal-qr" role="img" aria-label="Código QR del formulario: {{ c.nombre }}">{{ c.url | qr }}</div>
+        <p class="canal-qr-texto">Escaneá con el celular</p>
+        <a class="boton canal-boton" href="{{ c.url }}" target="_blank" rel="noopener">Acceder al formulario {{ simbolo("externo") }}</a>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
 </section>
 {% endif %}
 {% endblock %}

@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from functools import lru_cache
 
+import segno
 from flask import Flask
+from markupsafe import Markup
 
 MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
          "septiembre", "octubre", "noviembre", "diciembre")
@@ -50,6 +53,17 @@ def formato(ext: str) -> str:
     return FORMATOS.get(ext.lower(), ext.upper() or "Archivo")
 
 
+@lru_cache(maxsize=32)
+def qr(url: str) -> Markup:
+    """Código QR de una dirección, en SVG sin tamaño fijo (lo da el CSS).
+
+    Siempre QR estándar (los Micro QR no los leen todas las cámaras) con corrección M,
+    que se lee bien también desde una pantalla."""
+    codigo = segno.make_qr(url, error="m")
+    return Markup(codigo.svg_inline(scale=1, border=2, omitsize=True, dark="#1D1D1B",
+                                    svgclass="qr", lineclass=None))
+
+
 def register(app: Flask) -> None:
-    for f in (fecha_larga, fecha_corta, tamano, formato):
+    for f in (fecha_larga, fecha_corta, tamano, formato, qr):
         app.add_template_filter(f)
