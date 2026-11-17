@@ -81,8 +81,8 @@ def test_home_accesos_rapidos_desde_la_configuracion(client):
     assert "ACUERDO" not in accesos
 
 
-CANALES = ["Buzón de Sugerencias", "No Conformidades (NC)", "Oportunidades de Mejora (OM)",
-           "Reporte de Incidentes", "Canal de Denuncias – Código de Ética"]
+CANALES = ["Buzón de Sugerencias", "No Conformidades", "Oportunidades de Mejora",
+           "Reporte de Incidentes", "Canal de Denuncias"]
 
 
 def test_home_canales_de_participacion_y_reporte(client):
@@ -91,16 +91,39 @@ def test_home_canales_de_participacion_y_reporte(client):
     canales = bloque(page, "titulo-canales")
     assert "Canales de Participación y Reporte" in canales
     assert "Tu voz cuenta. ¡Sé parte de la mejora!" in canales
-    # Una tarjeta por canal, en el orden de portal.toml, cada una con su QR y su botón
-    posiciones = [canales.index(f">{nombre}</h3>") for nombre in CANALES]
+    # Una tarjeta por canal, en el orden de portal.toml: nombre, público, pregunta corta y acciones
+    posiciones = [canales.index(f'-nombre">{nombre}</h3>') for nombre in CANALES]
     assert posiciones == sorted(posiciones)
-    assert canales.count('class="canal-qr"') == 5 and canales.count('class="qr"') == 5
-    assert canales.count("Acceder al formulario") == 5
-    assert canales.count(">Público interno y externo<") == 1 and canales.count(">Uso interno<") == 4
+    tarjetas = canales.split('<div class="canal-panel"')[0]
+    assert tarjetas.count('class="canal-abrir"') == 5
+    assert tarjetas.count("<span>Público interno y externo</span>") == 1
+    assert tarjetas.count("<span>Uso interno</span>") == 4
+    assert "¿Tenés una idea o algo para sugerirnos?" in tarjetas
+    assert "Ante una emergencia, avisá de inmediato." in tarjetas
+    assert 'class="qr"' not in tarjetas  # el QR está en el cuadro que se despliega
     # NC y OM comparten el formulario, pero son dos tarjetas
-    assert canales.count('href="https://forms.gle/wLXx5mh5tNHD6tXKA" target="_blank" rel="noopener"') == 2
-    assert "<strong>Importante:</strong>" in canales
-    assert "Este buzón no reemplaza esos canales de comunicación." in canales
+    assert tarjetas.count('href="https://forms.gle/wLXx5mh5tNHD6tXKA" target="_blank" rel="noopener"') == 2
+
+
+def test_home_canales_cuando_usarlo_despliega_el_detalle(client):
+    canales = bloque(html(client.get("/")), "titulo-canales")
+    # Cada «¿Cuándo usarlo?» controla su cuadro, cerrado al entrar
+    for i in range(1, 6):
+        assert f'aria-expanded="false" aria-controls="canal-{i}"' in canales
+        assert f'id="canal-{i}" role="region" aria-labelledby="canal-{i}-titulo" tabindex="-1" hidden' in canales
+    # El cuadro tiene la pregunta completa, la explicación, el ejemplo, el QR y el botón
+    paneles = canales.split('<div class="canal-panel"', 1)[1]
+    assert 'id="canal-2-titulo">No Conformidades (NC)</h3>' in paneles
+    assert 'id="canal-5-titulo">Canal de Denuncias – Código de Ética</h3>' in paneles
+    assert "¿Tenés una idea, sugerencia, inquietud o reclamo que quieras compartir?" in paneles
+    assert paneles.count("¿Cuándo usar este canal?") == 5 and paneles.count(">Por ejemplo<") == 5
+    assert paneles.count('class="canal-qr"') == 5 and paneles.count('class="qr"') == 5
+    assert paneles.count("Abrir formulario") == 5
+    assert "<strong>Importante:</strong>" in paneles
+    assert "Este buzón no reemplaza esos canales de comunicación." in paneles
+    r = client.get("/static/js/canales.js")
+    assert r.status_code == 200
+    r.close()
 
 
 def test_home_sin_canales_configurados(data_dir):
