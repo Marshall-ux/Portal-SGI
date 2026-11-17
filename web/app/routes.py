@@ -44,16 +44,13 @@ def ayudantes():
 @bp.get("/")
 def home():
     index = _index_o_preparando()
-    accesos = [a for a in accesos_rapidos(index, current_app.config["PORTAL"]) if a.documento]
-    en_accesos = {id(a.documento) for a in accesos}
     return render_template(
         "home.html",
         estado=_store().status(),
-        accesos=accesos,
-        # Los archivos de la raíz del disco que no son accesos rápidos
-        otros=[d for d in index.root.documents if id(d) not in en_accesos],
+        accesos=[a for a in accesos_rapidos(index, current_app.config["PORTAL"]) if a.documento],
         secciones=secciones_home(index, current_app.config["PORTAL"]),
         cert=current_app.config["PORTAL"].get("certificacion"),
+        canales=current_app.config["PORTAL"].get("canales"),
     )
 
 
