@@ -148,40 +148,75 @@
     {% if canales.descripcion %}<p class="subtitulo">{{ canales.descripcion }}</p>{% endif %}
     {% if canales.indicacion %}<p class="canales-indicacion">{{ canales.indicacion }}</p>{% endif %}
   </div>
-  <ul class="canales-lista">
+  {# Tarjetas livianas para elegir el canal; «¿Cuándo usarlo?» despliega su cuadro debajo de la
+     fila (js/canales.js lo ubica ahí). Sin JavaScript los cuadros quedan a la vista al final. #}
+  <noscript><style>.canal-panel[hidden] { display: block; } .canal-panel::before, .canal-cuando, .canal-cerrar { display: none; }</style></noscript>
+  <div class="canales-grilla" data-canales>
     {% for c in canales.lista %}
-    <li class="canal">
-      <div class="canal-cuerpo">
-        <div class="canal-cabecera">
-          {{ icono(c.icono, "canal-icono") }}
-          <div>
-            <h3 class="canal-nombre">{{ c.nombre }}</h3>
-            <p class="canal-alcance">
-              <span class="canal-publico canal-publico-{{ c.publico }}">{{ PUBLICO.get(c.publico, PUBLICO.interno) }}</span>
-              {% if c.alcance %}<span>{{ c.alcance }}</span>{% endif %}
-            </p>
-          </div>
+    <article class="canal-tarjeta" aria-labelledby="canal-{{ loop.index }}-nombre">
+      <div class="canal-tarjeta-cuerpo">
+        {{ icono(c.icono, "canal-icono") }}
+        <div class="canal-tarjeta-texto">
+          <h3 class="canal-nombre" id="canal-{{ loop.index }}-nombre">{{ c.nombre }}</h3>
+          {% if c.subtitulo %}<p class="canal-subtitulo">{{ c.subtitulo }}</p>{% endif %}
+          <p class="canal-publico">{{ simbolo("equipo") }}<span>{{ PUBLICO.get(c.publico, PUBLICO.interno) }}</span></p>
+          <p class="canal-pregunta-corta">{{ c.pregunta_corta or c.pregunta }}</p>
+          {% if c.aviso_corto %}<p class="canal-aviso-corto">{{ simbolo("aviso") }}<span>{{ c.aviso_corto }}</span></p>{% endif %}
         </div>
-        <p class="canal-pregunta">{{ c.pregunta }}</p>
-        <p class="canal-texto">{{ c.descripcion }}</p>
-        {% if c.ejemplo %}<p class="canal-ejemplo"><strong>Por ejemplo:</strong> {{ c.ejemplo }}</p>{% endif %}
-        {% if c.nota %}<p class="canal-texto canal-nota">{% if c.nota_titulo %}<strong>{{ c.nota_titulo }}</strong> {% endif %}{{ c.nota }}</p>{% endif %}
-        {% if c.importante %}<p class="canal-importante">{{ simbolo("aviso") }}<span><strong>Importante:</strong> {{ c.importante }}</span></p>{% endif %}
       </div>
-      {# El QR sirve en la computadora (para abrirlo en el celular, o para que lo escanee
-         alguien externo); en el celular se oculta y queda el botón. #}
-      <div class="canal-accion">
-        <div class="canal-qr" role="img" aria-label="Código QR del formulario: {{ c.nombre }}">{{ c.url | qr }}</div>
-        <p class="canal-qr-texto">Escaneá con el celular</p>
-        <a class="boton canal-boton" href="{{ c.url }}" target="_blank" rel="noopener">Acceder al formulario {{ simbolo("externo") }}</a>
+      <div class="canal-acciones">
+        <a class="canal-abrir" href="{{ c.url }}" target="_blank" rel="noopener">Abrir formulario {{ simbolo("abrir") }}</a>
+        <button class="canal-cuando" type="button" aria-expanded="false" aria-controls="canal-{{ loop.index }}">¿Cuándo usarlo? {{ simbolo("abajo") }}</button>
       </div>
-    </li>
+    </article>
     {% endfor %}
-  </ul>
+
+    {% for c in canales.lista %}
+    <div class="canal-panel" id="canal-{{ loop.index }}" role="region" aria-labelledby="canal-{{ loop.index }}-titulo" tabindex="-1" hidden>
+      <header class="canal-panel-cabecera">
+        {{ icono(c.icono, "canal-icono") }}
+        <div class="canal-panel-titulos">
+          <h3 id="canal-{{ loop.index }}-titulo">{{ c.nombre }}{% if c.sigla %} ({{ c.sigla }}){% endif %}{% if c.subtitulo %} – {{ c.subtitulo }}{% endif %}</h3>
+          <p class="canal-alcance">
+            <span class="canal-publico">{{ simbolo("equipo") }}<span>{{ PUBLICO.get(c.publico, PUBLICO.interno) }}</span></span>
+            {% if c.alcance %}<span>{{ c.alcance }}</span>{% endif %}
+          </p>
+        </div>
+        <button class="canal-cerrar" type="button" aria-label="Cerrar: {{ c.nombre }}">{{ simbolo("cerrar") }}</button>
+      </header>
+      <p class="canal-pregunta">{{ c.pregunta }}</p>
+      <div class="canal-panel-columnas">
+        <div class="canal-panel-texto">
+          <h4>¿Cuándo usar este canal?</h4>
+          <p>{{ c.descripcion }}</p>
+          {% if c.ejemplo %}
+          <div class="canal-ejemplo">
+            <p class="canal-ejemplo-titulo">Por ejemplo</p>
+            <p>{{ c.ejemplo }}</p>
+          </div>
+          {% endif %}
+          {% if c.nota %}<p class="canal-nota">{% if c.nota_titulo %}<strong>{{ c.nota_titulo }}</strong> {% endif %}{{ c.nota }}</p>{% endif %}
+          {% if c.importante %}<p class="canal-importante">{{ simbolo("aviso") }}<span><strong>Importante:</strong> {{ c.importante }}</span></p>{% endif %}
+        </div>
+        {# El QR sirve en la computadora (para abrirlo en el celular, o para que lo escanee
+           alguien externo); en el celular se oculta y queda el botón. #}
+        <div class="canal-qr-caja">
+          <p class="canal-qr-titulo">Desde tu celular</p>
+          <div class="canal-qr" role="img" aria-label="Código QR del formulario: {{ c.nombre }}">{{ c.url | qr }}</div>
+          <p class="canal-qr-texto">Escaneá para acceder al formulario</p>
+        </div>
+      </div>
+      <div class="canal-panel-pie">
+        <a class="boton canal-boton" href="{{ c.url }}" target="_blank" rel="noopener">Abrir formulario {{ simbolo("abrir") }}</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 </section>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
 {% if cert %}<script src="{{ url_for('static', filename='js/certificacion.js') }}" defer></script>{% endif %}
+{% if canales %}<script src="{{ url_for('static', filename='js/canales.js') }}" defer></script>{% endif %}
 {% endblock %}
