@@ -63,7 +63,10 @@ repetida (`.pdf.pdf`), versiones viejas en la misma carpeta y carpetas vacías.
 | Accesos rápidos | Lista `[[accesos]]` de `web/config/portal.toml` (hoy: Mapa de Proceso y Política del Sistema de Gestión Integrado). Cada acceso apunta al documento donde está en el disco, sin copiarlo, y abre siempre la revisión vigente. Si el documento se renombra o se borra, el acceso deja de mostrarse y el reporte del disco lo avisa. |
 | Certificación vigente | Sello e información de `web/config/portal.toml` |
 | Documentación | Una tarjeta por carpeta principal del disco. Título, descripción e ícono en `web/config/portal.toml`; una carpeta nueva aparece igual, con su nombre y un ícono genérico. |
-| Otros documentos | El resto de los archivos de la raíz del disco |
+| Canales de Participación y Reporte | Sección `[canales]` de `web/config/portal.toml`: una tarjeta por canal (Buzón de Sugerencias, NC, OM, Incidentes, Denuncias) con a quién está dirigido, pregunta orientativa, explicación, ejemplo, QR y botón al formulario. El QR se genera desde la dirección configurada: si cambia un formulario, alcanza con cambiar `url`. En el celular el QR se oculta y queda el botón. |
+
+Los archivos sueltos en la raíz del disco (fuera de las carpetas de sección) no se listan en la home,
+pero se encuentran con el buscador y se abren con su enlace.
 
 La Guía de Acceso (`00. Guia de Acceso Documentación SGI.pdf`) no se publica (`no_publicar` en
 `web/config/portal.toml`): las tarjetas de Documentación ya llevan a cada carpeta y sus enlaces

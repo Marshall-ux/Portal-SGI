@@ -81,10 +81,48 @@ def test_home_accesos_rapidos_desde_la_configuracion(client):
     assert "ACUERDO" not in accesos
 
 
-def test_home_otros_documentos_sin_los_accesos(client):
-    otros = bloque(html(client.get("/")), "titulo-otros")
-    assert 'href="/d/acuerdo-con-suscriptor"' in otros
-    assert "mapa-de-proceso" not in otros
+CANALES = ["Buzón de Sugerencias", "No Conformidades (NC)", "Oportunidades de Mejora (OM)",
+           "Reporte de Incidentes", "Canal de Denuncias – Código de Ética"]
+
+
+def test_home_canales_de_participacion_y_reporte(client):
+    page = html(client.get("/"))
+    assert "Otros documentos" not in page
+    canales = bloque(page, "titulo-canales")
+    assert "Canales de Participación y Reporte" in canales
+    assert "Tu voz cuenta. ¡Sé parte de la mejora!" in canales
+    # Una tarjeta por canal, en el orden de portal.toml, cada una con su QR y su botón
+    posiciones = [canales.index(f">{nombre}</h3>") for nombre in CANALES]
+    assert posiciones == sorted(posiciones)
+    assert canales.count('class="canal-qr"') == 5 and canales.count('class="qr"') == 5
+    assert canales.count("Acceder al formulario") == 5
+    assert canales.count(">Público interno y externo<") == 1 and canales.count(">Uso interno<") == 4
+    # NC y OM comparten el formulario, pero son dos tarjetas
+    assert canales.count('href="https://forms.gle/wLXx5mh5tNHD6tXKA" target="_blank" rel="noopener"') == 2
+    assert "<strong>Importante:</strong>" in canales
+    assert "Este buzón no reemplaza esos canales de comunicación." in canales
+
+
+def test_home_sin_canales_configurados(data_dir):
+    app = create_app({"DATA_DIR": str(data_dir)})
+    del app.config["PORTAL"]["canales"]
+    page = html(app.test_client().get("/"))
+    assert 'id="titulo-canales"' not in page and "Documentación" in page
+
+
+def test_qr_de_los_canales():
+    from app.filters import qr
+
+    svg = qr("https://forms.gle/vrp97hmSJcEJTNYt6")
+    assert svg.startswith('<svg viewBox="') and 'class="qr"' in svg
+    assert "width=" not in svg.split(">")[0]  # sin tamaño fijo: lo da el CSS
+    assert qr("https://forms.gle/16V1RJrpnqMJFW4v8") != svg
+
+
+def test_documentos_de_la_raiz_siguen_en_el_buscador(client):
+    """Ya no se listan en la home, pero se encuentran y se abren igual."""
+    assert 'href="/d/acuerdo-con-suscriptor"' not in html(client.get("/"))
+    assert 'href="/d/acuerdo-con-suscriptor"' in html(client.get("/buscar?q=acuerdo"))
 
 
 def test_guia_de_acceso_no_se_publica(client):
