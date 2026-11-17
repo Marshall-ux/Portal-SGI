@@ -133,46 +133,56 @@ aplicacion = [
 compromiso = "prevenir lesiones y enfermedades laborales, reducir los riesgos y promover ambientes de trabajo seguros y saludables."
 
 # Canales de participación y reporte: un bloque al final de la home, con una tarjeta por canal
-# en este orden. El QR de cada tarjeta se genera solo a partir de "url": si cambia el
-# formulario, alcanza con cambiar la dirección acá.
-# Cada canal: "nombre", "publico" ("externo" muestra «Público interno y externo», "interno"
-# muestra «Uso interno»), "alcance" (opcional, a quién está dirigido), "pregunta", "descripcion",
-# "ejemplo" (se muestra después de «Por ejemplo:»), "nota" con su "nota_titulo" opcional,
-# "importante" (recuadro de advertencia), "url" e "icono".
-# Íconos disponibles: buzones, no-conformidad, mejora, incidente, denuncia.
+# en este orden (de a tres por fila; la última fila queda centrada). La tarjeta muestra lo
+# justo para elegir el canal; «¿Cuándo usarlo?» despliega debajo de la fila la explicación,
+# el ejemplo y el QR. El QR se genera solo a partir de "url": si cambia el formulario,
+# alcanza con cambiar la dirección acá.
+#
+# En la tarjeta: "nombre", "subtitulo" (opcional, debajo del nombre), "publico" ("externo"
+# muestra «Público interno y externo», "interno" muestra «Uso interno»), "pregunta_corta" y
+# "aviso_corto" (opcional, una línea de advertencia).
+# En el cuadro que se despliega: "pregunta" (la completa), "sigla" (opcional, se agrega al
+# nombre: «No Conformidades (NC)»), "alcance" (opcional, a quién está dirigido), "descripcion",
+# "ejemplo", "nota" con su "nota_titulo" opcional e "importante" (recuadro de advertencia).
+# Además: "url" del formulario e "icono" (buzon, no-conformidad, mejora, incidente, denuncia).
 [canales]
 titulo = "Canales de Participación y Reporte"
 lema = "Tu voz cuenta. ¡Sé parte de la mejora!"
-descripcion = "En Neostar contamos con distintos canales para compartir sugerencias, comunicar incumplimientos, proponer mejoras y reportar situaciones que requieren atención."
+descripcion = "Compartí sugerencias, proponé mejoras o reportá incumplimientos y situaciones que requieran atención."
 indicacion = "Elegí el canal adecuado según lo que necesites informar."
 
 [[canales.lista]]
 nombre = "Buzón de Sugerencias"
 publico = "externo"
+pregunta_corta = "¿Tenés una idea o algo para sugerirnos?"
 pregunta = "¿Tenés una idea, sugerencia, inquietud o reclamo que quieras compartir?"
 descripcion = "Este buzón permite comunicar propuestas para mejorar nuestros servicios, procesos o instalaciones. También recibe quejas y reclamos de clientes, proveedores y vecinos relacionados con nuestras concesionarias."
-ejemplo = "sugerir una mejora en la atención, comunicar una disconformidad con un servicio o informar molestias ocasionadas por las actividades de una sucursal."
+ejemplo = "Sugerir una mejora en la atención, comunicar una disconformidad con un servicio o informar molestias ocasionadas por las actividades de una sucursal."
 url = "https://forms.gle/vrp97hmSJcEJTNYt6"
-icono = "buzones"
+icono = "buzon"
 
 # NC y OM comparten el formulario, pero se muestran como dos canales.
 [[canales.lista]]
-nombre = "No Conformidades (NC)"
+nombre = "No Conformidades"
+sigla = "NC"
 publico = "interno"
 alcance = "Colaboradores de las concesionarias Neostar"
+pregunta_corta = "¿Detectaste un requisito que no se está cumpliendo?"
 pregunta = "¿Detectaste algo que no cumple con un requisito o procedimiento establecido?"
 descripcion = "Utilizá este canal para informar incumplimientos que requieren corrección, análisis de sus causas y acciones para evitar que se repitan."
-ejemplo = "un control obligatorio que no se realizó, un procedimiento que no se cumplió o un registro requerido que no fue completado."
+ejemplo = "Un control obligatorio que no se realizó, un procedimiento que no se cumplió o un registro requerido que no fue completado."
 url = "https://forms.gle/wLXx5mh5tNHD6tXKA"
 icono = "no-conformidad"
 
 [[canales.lista]]
-nombre = "Oportunidades de Mejora (OM)"
+nombre = "Oportunidades de Mejora"
+sigla = "OM"
 publico = "interno"
 alcance = "Colaboradores de las concesionarias Neostar"
+pregunta_corta = "¿Encontraste algo que podríamos hacer mejor?"
 pregunta = "¿Identificaste algo que podemos hacer mejor, aunque no exista un incumplimiento?"
 descripcion = "Este canal permite proponer mejoras para optimizar procesos, prevenir dificultades y facilitar nuestras tareas cotidianas."
-ejemplo = "mejorar la organización de herramientas, simplificar un registro o incorporar una medida preventiva."
+ejemplo = "Mejorar la organización de herramientas, simplificar un registro o incorporar una medida preventiva."
 url = "https://forms.gle/wLXx5mh5tNHD6tXKA"
 icono = "mejora"
 
@@ -180,9 +190,11 @@ icono = "mejora"
 nombre = "Reporte de Incidentes"
 publico = "interno"
 alcance = "Colaboradores de las concesionarias Neostar"
+pregunta_corta = "¿Ocurrió algo que pudo causar daños o lesiones?"
+aviso_corto = "Ante una emergencia, avisá de inmediato."
 pregunta = "¿Ocurrió una situación que pudo haber provocado un accidente?"
 descripcion = "Utilizá este canal para informar incidentes o situaciones imprevistas que, aunque no hayan ocasionado lesiones ni daños, podrían haber generado un accidente."
-ejemplo = "un colaborador resbala sin llegar a caerse, una herramienta cae cerca de una persona sin golpearla o un vehículo realiza una maniobra que casi provoca una colisión."
+ejemplo = "Un colaborador resbala sin llegar a caerse, una herramienta cae cerca de una persona sin golpearla o un vehículo realiza una maniobra que casi provoca una colisión."
 nota_titulo = "¿Por qué es importante reportarlos?"
 nota = "Porque nos permite identificar riesgos, analizar lo ocurrido e implementar medidas preventivas antes de que se produzca un accidente."
 importante = "si ocurre un accidente o una emergencia, comunicá inmediatamente la situación al responsable correspondiente y seguí los procedimientos establecidos. Este buzón no reemplaza esos canales de comunicación."
@@ -190,12 +202,14 @@ url = "https://forms.gle/g1eccPX7eRqadTX77"
 icono = "incidente"
 
 [[canales.lista]]
-nombre = "Canal de Denuncias – Código de Ética"
+nombre = "Canal de Denuncias"
+subtitulo = "Código de Ética"
 publico = "interno"
 alcance = "Colaboradores de las concesionarias Neostar"
+pregunta_corta = "¿Conocés una conducta contraria a nuestros principios éticos?"
 pregunta = "¿Conocés o sospechás de una conducta contraria a nuestros principios éticos?"
 descripcion = "Este canal permite informar situaciones que puedan vulnerar el respeto, la integridad, la transparencia o las normas de conducta establecidas en nuestro Código de Ética."
-ejemplo = "situaciones de discriminación, acoso, abuso de autoridad, corrupción, conflictos de intereses o uso indebido de información confidencial."
+ejemplo = "Situaciones de discriminación, acoso, abuso de autoridad, corrupción, conflictos de intereses o uso indebido de información confidencial."
 nota = "Las denuncias se gestionan de manera confidencial e imparcial, con protección frente a represalias para quienes actúen de buena fe, conforme a lo establecido en el Código de Ética."
 url = "https://forms.gle/16V1RJrpnqMJFW4v8"
 icono = "denuncia"
